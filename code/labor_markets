@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 class labor_market:
-    def __init__(self,alphai,betai,Ai,wi,kappai,si,etai,omegai,Hi,alphaj,Aj,wj,kappaj,sj,etaj,omegaj,Hj):
+    def __init__(self,alphai=0.6,betai=0,Ai=1,wi=0.6,kappai=0.84,si=0.035,etai=0.7,omegai=0.67,Hi=1,alphaj=0.6,Aj=1,wj=0.6,kappaj=0.84,sj=0.035,etaj=0.7,omegaj=0.67,Hj=1):
         #production function parameters: currently only setup for fully rigid wages
         self.alphai, self.betai, self.Ai, self.wi = alphai, betai, Ai, wi
         self.alphaj, self.Aj, self.wj = alphaj, Aj, wj
@@ -40,9 +40,25 @@ class labor_market:
         f = self.job_finding(self.omegai,self.thetai,self.etai)
         self.Ls = f / (f + self.si)*self.Hi
         return self.Ls
-    
-    def plot_Ls_Ld(self):
-        thetag = np.linspace(0.01,0.99,10000)
+
+    def plot_Ld(self,lower=0.0001,upper=4):
+        thetag = np.linspace(lower,upper,10000)
+        self.theta_exog(thetag,thetag)
+        Ld = self.labor_demand()
+        
+        plt.plot(Ld,thetag,'-b')
+        plt.show()
+        
+    def plot_Ls(self,lower=0.0001,upper=4):
+        thetag = np.linspace(lower,upper,10000)
+        self.theta_exog(thetag,thetag)
+        Ls = self.labor_supply()
+        
+        plt.plot(Ls,thetag,'-r')
+        plt.show()
+        
+    def plot_Ls_Ld(self,lower=0.0001,upper=4):
+        thetag = np.linspace(lower,upper,10000)
         self.theta_exog(thetag,thetag)
         Ld = self.labor_demand()
         Ls = self.labor_supply()
@@ -50,10 +66,18 @@ class labor_market:
         plt.plot(Ld,thetag,'-b')
         plt.plot(Ls,thetag,'-r')
         plt.axvline(x=self.Hi)
-        plt.show
+        plt.show()
 
-test = labor_market(0.5,0,1,1,1,0.03,0.5,1,1,0.5,1,1,1,0.03,0.5,1,1)
-test.plot_Ls_Ld()
+    def production_function():
+        return
+
+
+test = labor_market()
+test.plot_Ls(upper=6)
+test.plot_Ld(upper=6)
+test.plot_Ls_Ld(upper=6)
+
+
 
 print('done')
 
