@@ -1,37 +1,60 @@
 #File containing code for simple examples of labor markets 
+import numpy as np
+import matplotlib.pyplot as plt
 
 class labor_market:
-    def __init__(self,alphai,betai,Ai,wi,kappai,si,etai,omegai,Hi,alphaj,betaj,Aj,wj,kappaj,sj,etaj,omegaj,Hj,yj):
+    def __init__(self,alphai,betai,Ai,wi,kappai,si,etai,omegai,Hi,alphaj,Aj,wj,kappaj,sj,etaj,omegaj,Hj):
         #production function parameters: currently only setup for fully rigid wages
         self.alphai, self.betai, self.Ai, self.wi = alphai, betai, Ai, wi
-        self.alphaj, self.betaj, self.Aj, self.yj, self.wj = alphaj, betaj, Aj, yj, wj
+        self.alphaj, self.Aj, self.wj = alphaj, Aj, wj
         #matching function parameters
         self.etai, self.omegai = etai, omegai
         self.etaj, self.omegaj = etaj, omegaj
         #labor market parameters
         self.kappai, self.si, self.Hi = kappai, si, Hi
-        self.kappaj, self.si, self.Hi = kappaj, sj, Hj
+        self.kappaj, self.sj, self.Hi = kappaj, sj, Hj
 
+    def job_finding(self,omega,theta,eta):
+        return omega * theta ** (1 + eta )
+
+    def vacancy_filling(self,omega,theta,eta):
+        return omega * theta ** (-eta)
+        
     def theta_exog(self,thetai,thetaj):
         self.thetai = thetai
-        self.thataj = thetaj
-        return 
+        self.thetaj = thetaj
         
-    def recruiter_producer(theta,omega,eta,kappa,s):
-        q = omega * theta ** ( -eta )
-        return  q / ( q - kappa * s )
+    def recruiter_producer(self,theta,omega,eta,kappa,s):
+        q = self.vacancy_filling(omega,theta,eta)
+        return  kappa * s / ( q - kappa * s )
 
     def labor_demand(self):
         self.taui = self.recruiter_producer(self.thetai,self.omegai,self.etai,self.kappai,self.si)
-        self.tauj = self.recruiter_producer(self.thetaj,self.etaj,self.kappaj,self.sj)
+        self.tauj = self.recruiter_producer(self.thetaj,self.omegaj,self.etaj,self.kappaj,self.sj)
         own   = ( self.alphai * self.Ai / ( self.wi * ( 1 + self.taui ) ** self.alphai ) ) ** ( 1 / ( 1 - self.alphai ) )
         other = ( self.alphaj * self.Aj ** ( 1 / self.alphaj )/( self.wj * ( 1 + self.tauj ) ) ) ** ( self.alphaj / ( 1- self.alphaj ) * self.betai /( 1- self.alphai ) ) 
         self.Ld = other * own
         return self.Ld
     
     def labor_supply(self):
-        return 
+        f = self.job_finding(self.omegai,self.thetai,self.etai)
+        self.Ls = f / (f + self.si)*self.Hi
+        return self.Ls
+    
+    def plot_Ls_Ld(self):
+        thetag = np.linspace(0.01,0.99,10000)
+        self.theta_exog(thetag,thetag)
+        Ld = self.labor_demand()
+        Ls = self.labor_supply()
+        
+        plt.plot(Ld,thetag,'-b')
+        plt.plot(Ls,thetag,'-r')
+        plt.axvline(x=self.Hi)
+        plt.show
 
-test = labor_market
+test = labor_market(0.5,0,1,1,1,0.03,0.5,1,1,0.5,1,1,1,0.03,0.5,1,1)
+test.plot_Ls_Ld()
+
+print('done')
 
 
