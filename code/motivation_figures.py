@@ -283,19 +283,16 @@ plot3.invert_xaxis()
 plt.savefig('output/shock_b.png')
 
 fig_unemployment_shockb, (plot1, plot2, plot3) = plt.subplots(3, 1)
-plot1.plot(lamvec,ushockb[0,:],'-k')
+plot1.plot(bvec,ushockb[0,:],'-k')
 plot1.set_ylabel('Sector 1')
-plot1.invert_xaxis()
 plot1.set_title("Response of unemployment to shock in sector 1")
 
-plot2.plot(lamvec,ushockb[1,:],'-k')
+plot2.plot(bvec,ushockb[1,:],'-k')
 plot2.set_ylabel('Sector 2')
-plot2.invert_xaxis()
 
-plot3.plot(lamvec,uaggshockb[:],'-k')
+plot3.plot(bvec,uaggshockb[:],'-k')
 plot3.set_ylabel('Aggregate')
 plot3.set_xlabel('More production linkages ->')
-plot3.invert_xaxis()
 plt.savefig('output/unemployment_shockb.png')
 
 print('done')
