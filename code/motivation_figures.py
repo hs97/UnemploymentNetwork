@@ -1,0 +1,168 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import scipy.optimize as opt
+from functions.labor_markets import labor_market, economy
+
+#### baseline employement, unemployment, and output with variable labor market mobility ####
+b = 0
+lamvec     = np.flip(np.linspace(0.5,1,1000)) #labor market openess from less open to less open
+Lvec       = np.zeros((2,lamvec.shape[0]))
+uratevec   = np.zeros_like(Lvec)
+yvec       = np.zeros_like(Lvec)
+for i in range(lamvec.shape[0]):
+    m1 = labor_market(lambdai=lamvec[i], lambdaj=lamvec[i], betai=0)
+    m2 = labor_market(lambdai=lamvec[i], lambdaj=lamvec[i], betai=b)
+    eq = economy(m1,m2)
+    eq.solve_equilibrium()
+    Lvec[0,i], Lvec[1,i] = eq.market1.Ld, eq.market2.Ld
+    uratevec[0,i], uratevec[1,i] = eq.market1.urate, eq.market2.urate 
+    yvec[0,i], yvec[1,i] = eq.market1.yi, eq.market2.yi
+
+fig_baseline, (plot1, plot2, plot3) = plt.subplots(3, 1)
+plot1.plot(lamvec,Lvec[0,:],'-k')
+plot1.plot(lamvec,Lvec[1,:],'-r')
+plot1.set_ylabel('Employment')
+plot1.invert_xaxis()
+
+plot2.plot(lamvec,uratevec[0,:],'-k')
+plot2.plot(lamvec,uratevec[1,:],'-r')
+plot2.set_ylabel('Unemployment')
+plot2.invert_xaxis()
+
+plot3.plot(lamvec,yvec[0,:],'-k')
+plot3.plot(lamvec,yvec[1,:],'-r')
+plot3.set_ylabel('Output')
+plot3.set_xlabel('More labor flexibility ->')
+plot3.invert_xaxis()
+plt.savefig('output/baseline.png')
+
+# responses of equilibrium outcomes to positive 5% shock to productivity in upstream sector at varying levels of labor market mobility
+shock = 1.01
+Lvec_s1       = np.zeros((2,lamvec.shape[0]))
+uratevec_s1   = np.zeros_like(Lvec)
+yvec_s1       = np.zeros_like(Lvec)
+for i in range(lamvec.shape[0]):
+    m1 = labor_market(lambdai=lamvec[i], lambdaj=lamvec[i], betai=0, Ai=shock)
+    m2 = labor_market(lambdai=lamvec[i], lambdaj=lamvec[i], betai= b)
+    eq = economy(m1,m2)
+    eq.solve_equilibrium()
+    Lvec_s1[0,i], Lvec_s1[1,i] = eq.market1.Ld, eq.market2.Ld
+    uratevec_s1[0,i], uratevec_s1[1,i] = eq.market1.urate, eq.market2.urate 
+    yvec_s1[0,i], yvec_s1[1,i] = eq.market1.yi, eq.market2.yi
+
+fig_s1, (plot1, plot2, plot3) = plt.subplots(3, 1)
+plot1.plot(lamvec,Lvec_s1[0,:],'-k')
+plot1.plot(lamvec,Lvec_s1[1,:],'-r')
+plot1.set_ylabel('Employment')
+plot1.invert_xaxis()
+
+plot2.plot(lamvec,uratevec_s1[0,:],'-k')
+plot2.plot(lamvec,uratevec_s1[1,:],'-r')
+plot2.set_ylabel('Unemployment')
+plot2.invert_xaxis()
+
+plot3.plot(lamvec,yvec_s1[0,:],'-k')
+plot3.plot(lamvec,yvec_s1[1,:],'-r')
+plot3.set_ylabel('Output')
+plot3.set_xlabel('More labor flexibility ->')
+plot3.invert_xaxis()
+plt.savefig('output/baseline_A1.png')
+
+#side of shock to other parts
+Lshock1 = (Lvec_s1-Lvec)/Lvec
+ushock1 = (uratevec_s1-uratevec)/uratevec
+yshoc1 = (yvec_s1-yvec)/yvec
+
+fig_shock1, (plot1, plot2, plot3) = plt.subplots(3, 1)
+plot1.plot(lamvec,Lshock1[0,:],'-k')
+plot1.plot(lamvec,Lshock1[1,:],'-r')
+plot1.set_ylabel('Employment')
+plot1.set_title('Response to 1 percent shock to A1')
+plot1.invert_xaxis()
+
+plot2.plot(lamvec,ushock1[0,:],'-k')
+plot2.plot(lamvec,ushock1[1,:],'-r')
+plot2.set_ylabel('Unemployment')
+plot2.invert_xaxis()
+
+plot3.plot(lamvec,yshoc1[0,:],'-k')
+plot3.plot(lamvec,yshoc1[1,:],'-r')
+plot3.set_ylabel('Output')
+plot3.set_xlabel('More labor flexibility ->')
+plot3.invert_xaxis()
+plt.savefig('output/shock_A1.png')
+
+# responses of equilibrium outcomes to positive 5% shock to productivity in downstream sector at varying levels of labor market mobility
+shock = 1.01
+Lvec_s2       = np.zeros((2,lamvec.shape[0]))
+uratevec_s2   = np.zeros_like(Lvec)
+yvec_s2       = np.zeros_like(Lvec)
+for i in range(lamvec.shape[0]):
+    m1 = labor_market(lambdai=lamvec[i], lambdaj=lamvec[i], betai=0)
+    m2 = labor_market(lambdai=lamvec[i], lambdaj=lamvec[i], betai=b, Ai=shock)
+    eq = economy(m1,m2)
+    eq.solve_equilibrium()
+    Lvec_s2[0,i], Lvec_s2[1,i] = eq.market1.Ld, eq.market2.Ld
+    uratevec_s2[0,i], uratevec_s2[1,i] = eq.market1.urate, eq.market2.urate 
+    yvec_s2[0,i], yvec_s2[1,i] = eq.market1.yi, eq.market2.yi
+
+fig_s1, (plot1, plot2, plot3) = plt.subplots(3, 1)
+plot1.plot(lamvec,Lvec_s2[0,:],'-k')
+plot1.plot(lamvec,Lvec_s2[1,:],'-r')
+plot1.set_ylabel('Employment')
+plot1.invert_xaxis()
+
+plot2.plot(lamvec,uratevec_s2[0,:],'-k')
+plot2.plot(lamvec,uratevec_s2[1,:],'-r')
+plot2.set_ylabel('Unemployment')
+plot2.invert_xaxis()
+
+plot3.plot(lamvec,yvec_s2[0,:],'-k')
+plot3.plot(lamvec,yvec_s2[1,:],'-r')
+plot3.set_ylabel('Output')
+plot3.set_xlabel('More labor flexibility ->')
+plot3.invert_xaxis()
+plt.savefig('output/baseline_A2.png')
+
+#side of shock to other parts
+Lshock2 = (Lvec_s2-Lvec)/Lvec
+ushock2 = (uratevec_s2-uratevec)/uratevec
+yshoc2 = (yvec_s2-yvec)/yvec
+
+fig_shock2, (plot1, plot2, plot3) = plt.subplots(3, 1)
+plot1.plot(lamvec,Lshock2[0,:],'-k')
+plot1.plot(lamvec,Lshock2[1,:],'-r')
+plot1.set_ylabel('Employment')
+plot1.set_title('Response to 1 percent shock to A2')
+plot1.invert_xaxis()
+
+plot2.plot(lamvec,ushock2[0,:],'-k')
+plot2.plot(lamvec,ushock2[1,:],'-r')
+plot2.set_ylabel('Unemployment')
+plot2.invert_xaxis()
+
+plot3.plot(lamvec,yshoc2[0,:],'-k')
+plot3.plot(lamvec,yshoc2[1,:],'-r')
+plot3.set_ylabel('Output')
+plot3.set_xlabel('More labor flexibility ->')
+plot3.invert_xaxis()
+plt.savefig('output/shock_A2.png')
+
+#what if we do the same thing but for a variation in beta given the same labor market tightness. 
+bvec  = np.linspace(0,1,1000)
+lam   = 0.5
+shock = 1.01 
+Lvec_b       = np.zeros((2,bvec.shape[0]))
+uratevec_b   = np.zeros_like(Lvec)
+yvec_b       = np.zeros_like(Lvec)
+for i in range(lamvec.shape[0]):
+    m1 = labor_market(lambdai=lam, lambdaj=lam, betai=0)
+    m2 = labor_market(lambdai=lam, lambdaj=lam, betai=bvec[i])
+    eq = economy(m1,m2)
+    eq.solve_equilibrium()
+    Lvec_b[0,i], Lvec_b[1,i] = eq.market1.Ld, eq.market2.Ld
+    uratevec_b[0,i], uratevec_b[1,i] = eq.market1.urate, eq.market2.urate 
+    yvec_b[0,i], yvec_b[1,i] = eq.market1.yi, eq.market2.yi
+
+
+print('done')
