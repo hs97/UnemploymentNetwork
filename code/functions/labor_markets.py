@@ -113,8 +113,8 @@ class economy:
         self.market2.labor_supply(self.market1.Ld)
         self.market1.production_function()
         self.market2.production_function()
-        self.market1.urate = (self.market1.Hi - self.market1.Ld)/self.market1.Hi
-        self.market2.urate = (self.market2.Hi - self.market2.Ld)/self.market2.Hi
+        self.market1.urate = ((self.market1.lambdai*self.market1.Hi + (1 - self.market1.lambdaj) * self.market1.Hj) - self.market1.Ld)/(self.market1.lambdai*self.market1.Hi + (1 - self.market1.lambdaj) * self.market1.Hj)
+        self.market2.urate = ((self.market2.lambdai*self.market2.Hi + (1 - self.market2.lambdaj) * self.market2.Hj) - self.market2.Ld)/(self.market2.lambdai*self.market2.Hi + (1 - self.market2.lambdaj) * self.market2.Hj)
         print(f"Equilibrium labor demand and supply for market 1 are {self.market1.Ld, self.market1.Ls}")     
         print(f"Equilibrium labor demand and supply for market 2 are {self.market2.Ld, self.market2.Ls}")     
         return self.theta_star

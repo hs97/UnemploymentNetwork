@@ -125,7 +125,7 @@ plot2.invert_xaxis()
 
 plot3.plot(lamvec,uaggshock1[:],'-k')
 plot3.set_ylabel('Aggregate')
-plot3.set_xlabel('More production linkages ->')
+plot3.set_xlabel('More labor linkages ->')
 plot3.invert_xaxis()
 plt.savefig('output/unemployment_shock1.png')
 
@@ -201,7 +201,7 @@ plot2.invert_xaxis()
 
 plot3.plot(lamvec,uaggshock2[:],'-k')
 plot3.set_ylabel('Aggregate')
-plot3.set_xlabel('More production linkages ->')
+plot3.set_xlabel('More labor linkages ->')
 plot3.invert_xaxis()
 plt.savefig('output/unemployment_shock2.png')
 
