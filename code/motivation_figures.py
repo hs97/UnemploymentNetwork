@@ -298,6 +298,4 @@ plot3.plot(bvec,ushockb[1,:],'-k')
 plot3.set_ylabel('Aggregate')
 '''
 plt.savefig('output/unemployment_shockb.png')
-
-
 print('done')
