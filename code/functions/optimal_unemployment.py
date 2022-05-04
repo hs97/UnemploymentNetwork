@@ -60,10 +60,10 @@ def ustar(objective,v,e,φ,η,λ,α,mfunc,mufunc,Lfunc,uguess_mean=np.array([]),
         itercount  += 1
         if us.success == True:
             out_mat = np.append(out_mat,us.x)
-            print('Num converged: ' + str(count_true))
-    out_mat = out_mat.reshape((100,v.shape[0]))
+            #print('Num converged: ' + str(count_true))
+    out_mat = out_mat.reshape((ntrue,v.shape[0]))
     out_gap = out_mat - out_mat[0,:]
-    if np.max(np.abs(out_gap))>1000*tol:
+    if np.max(np.abs(out_gap))>10*tol:
         success = False
     else:
         success = True
@@ -78,29 +78,62 @@ def Mindex(u,uopt,v,φ,η,mfunc):
 
 # Function that runs code once for each time period in the data
 
-def mismatch_estimation(df,objective,φ,η,λ,α,mfunc,mufunc,Lfunc,tol=1e-6,maxiter=1e5,ntrue=100,guessrange=0.1):
-    output = pd.DataFrame(index=df.date.unique(),columns=df.BEA_sector.unique())
-    M_t    = np.zeros(df.date.unique().shape[0]) 
-       
-    for i in range(df.date.unique().shape[0]):
-        vraw = np.array(df.v[df.date==df.date.unique()[i]])
-        uraw = np.array(df.u[df.date==df.date.unique()[i]])
-        eraw = np.array(df.e[df.date==df.date.unique()[i]])
-        e    = eraw/np.sum(eraw+uraw)
-        u    = uraw/np.sum(eraw+uraw)
-        v    = vraw/np.sum(eraw+uraw)
-           
-        ustar_t, success = ustar(objective,v,e,φ,η,λ,α,mfunc,mufunc,Lfunc,uguess_mean=u,tol=tol,maxiter=maxiter,ntrue=ntrue,guessrange=guessrange)
-        output.iloc[i,:] = ustar_t
-        M_t[i]  = Mindex(u,ustar_t,v,φ,η,mfunc)
-        print('Date successful: ' + str(success))
-    
-    output['mismatch index'] = M_t
+class mismatch_estimation:
+    def __init__(self,df,objective,φ,η,λ,α,mfunc,mufunc,Lfunc,tol=1e-6,maxiter=1e5,ntrue=100,guessrange=0.1):
+        self.input  = df
+        self.input  = self.input.rename(columns={'v':'vraw','u':'uraw','e':'eraw'})
+        self.input['v'] = self.input['vraw']
+        self.input['u'] = self.input['uraw']
+        self.input['e'] = self.input['eraw']
 
-    return output
+        self.param  = {'φ':φ,'η':η,'λ':λ,'α':α}
+        self.output = pd.DataFrame(index=df.date.unique(),columns=df.BEA_sector.unique())
+        self.M_t    = np.zeros(df.date.unique().shape[0])
+        for i in range(df.date.unique().shape[0]):
+            vraw = np.array(self.input.vraw[self.input.date==self.input.date.unique()[i]])
+            uraw = np.array(self.input.uraw[self.input.date==self.input.date.unique()[i]])
+            eraw = np.array(self.input.eraw[self.input.date==self.input.date.unique()[i]])
+            e    = eraw/np.sum(eraw+uraw)
+            u    = uraw/np.sum(eraw+uraw)
+            v    = vraw/np.sum(eraw+uraw)
+            self.input.eraw.iloc[self.input.date==self.input.date.unique()[i]] = e 
+            self.input.uraw.iloc[self.input.date==self.input.date.unique()[i]] = u 
+            self.input.vraw.iloc[self.input.date==self.input.date.unique()[i]] = v 
+            
+            ustar_t, success = ustar(objective,v,e,φ,η,λ,α,mfunc,mufunc,Lfunc,uguess_mean=u,tol=tol,maxiter=maxiter,ntrue=ntrue,guessrange=guessrange)
+            self.output.iloc[i,:] = ustar_t
+            self.M_t[i]  = Mindex(u,ustar_t,v,φ,η,mfunc)
+            print('Starting date: ' + str(df.date.unique()[i]))
+            print('Date successful: ' + str(success))
+    
+        self.output['mismatch_index'] = self.M_t 
+
+    def mHP(self,HP_λ):
+        self.output['mismatch_trend'], self.output['mismatch_cycle'] = HP(self.M_t,HP_λ)
 
 
 def ucounterfactual(u,uopt,Mfunc):
-    
+
     return
 
+# Filtering functions
+
+def HP(y,λ):
+    dim = y.shape[0]
+    y = y.reshape(dim,1)
+    H = HL(dim,λ)
+    x = np.matmul(np.linalg.inv(H),y)
+    c = y - x
+    return x, c
+
+def HL(dim,λ):
+    #main diagonal
+    d0 = np.ones((dim,))*(1+6*λ)
+    d0[0], d0[1], d0[-2], d0[-1] = 1+λ, 1+5*λ, 1+5*λ, 1+λ
+    #one above and one below main diagonal
+    d1 = np.ones((dim-1,))*(-4*λ)
+    d1[0], d1[-1] = -2*λ, -2*λ
+    #two above and two below main diagonal
+    d2 = np.ones((dim-2,))*λ
+    H = np.diag(d2,-2) + np.diag(d1,-1) + np.diag(d0,0) + np.diag(d1,1) + np.diag(d2,2) 
+    return H
