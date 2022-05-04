@@ -16,6 +16,9 @@ dfLabor_market_yearly = dfLabor_market_yearly.rename(columns={'year':'date'})
 
 dfLabor_market_monthly = dfLabor_market_monthly.sort_values(by=['date','BEA_sector'])
 dfLabor_market_yearly  = dfLabor_market_yearly.sort_values(by=['date','BEA_sector'])
+dfLabor_market_monthly = dfLabor_market_monthly.dropna(axis=0)
+dfLabor_market_yearly = dfLabor_market_yearly.dropna(axis=0)
+
 
 # reformatting parameters
 A = np.array(dfA.iloc[:,1:],dtype='float64')
@@ -26,12 +29,14 @@ A = np.array(dfA.iloc[:,1:],dtype='float64')
 η = 0.5
 
 # Sahin et al baseline
-sahin_yearly = mismatch_estimation(dfLabor_market_yearly,objective,φ,η,np.ones_like(φ),np.ones_like(φ),m_cd,mu_cd,Lones,guessrange=0.01)
-sahin_yearly.to_csv('Sahin_mismatch.csv')
-plt.plot(sahin_yearly.index, sahin_yearly['mismatch index'])
-plt.show()
+
+sahin_yearly = mismatch_estimation(dfLabor_market_yearly,objective,φ,η,np.ones_like(φ),np.ones_like(φ),m_cd,mu_cd,Lones,guessrange=0.01,ntrue=10,tol=1e-8)
+sahin_monthly = mismatch_estimation(dfLabor_market_monthly,objective,φ,η,np.ones_like(φ),np.ones_like(φ),m_cd,mu_cd,Lones,guessrange=0.01,ntrue=10,tol=1e-8)
+sahin_monthly.mHP(10)
+
 # With production network
-networks_yearly = mismatch_estimation(dfLabor_market_yearly,objective,φ,η,λ,α,m_cd,mu_cd,Lstar)
-networks_yearly.to_csv('networks_mismatch.csv')
+networks_yearly = mismatch_estimation(dfLabor_market_yearly,objective,φ,η,λ,α,m_cd,mu_cd,Lstar,guessrange=0.01,ntrue=100,tol=1e-8)
+networks_monthly = mismatch_estimation(dfLabor_market_monthly,objective,φ,η,λ,α,m_cd,mu_cd,Lstar,guessrange=0.01,ntrue=100,tol=1e-8)
+networks_monthly.mHP(10)
 
 print('done')
