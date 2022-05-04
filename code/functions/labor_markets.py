@@ -36,16 +36,16 @@ class labor_market:
         return  kappa * s / ( q - kappa * s )
 
     def labor_demand(self):
-        self.taui = self.recruiter_producer(self.thetai,self.omegai,self.etai,self.kappai,self.si)
-        self.tauj = self.recruiter_producer(self.thetaj,self.omegaj,self.etaj,self.kappaj,self.sj)
-        own   = (self.alphai* self.Ai / ( self.wi * ( 1 + self.taui ) ** self.alphai ) ) ** ( 1 / ( 1 - self.alphai ) )
-        other = ( self.alphaj * self.Aj ** (1/self.alphaj)/(self.wj*( 1 + self.tauj))) ** ( self.alphaj / ( 1- self.alphaj ) * self.betai /( 1- self.alphai ) ) 
+        self.taui = self.recruiter_producer(self.thetai, self.omegai, self.etai, self.kappai, self.si)
+        self.tauj = self.recruiter_producer(self.thetaj, self.omegaj, self.etaj, self.kappaj, self.sj)
+        own   = (self.alphai*self.Ai/(self.wi*(1 + self.taui)**self.alphai))**(1/(1 - self.alphai))
+        other = (self.alphaj*(self.Aj**(1/self.alphaj))/(self.wj*(1 + self.tauj)))**(self.alphaj/(1 - self.alphaj)*self.betai/(1 - self.alphai)) 
         self.Ld = other * own
         return self.Ld
     
     def labor_supply(self, Lj):
         f = self.job_finding(self.omegai, self.thetai, self.etai)
-        self.Ls = f / ( self.si + self.lambdai * f ) * ( self.lambdai * self.Hi + ( 1 - self.lambdaj ) * ( self.Hj - Lj ) )
+        self.Ls = f/(self.si + self.lambdai*f)*(self.lambdai*self.Hi + (1 - self.lambdaj)*(self.Hj - Lj))
         return self.Ls
 
     def plot_Ld(self,lower=0.0001 ,upper=4):
@@ -113,8 +113,13 @@ class economy:
         self.market2.labor_supply(self.market1.Ld)
         self.market1.production_function()
         self.market2.production_function()
-        self.market1.urate = ((self.market1.lambdai*self.market1.Hi + (1 - self.market1.lambdaj) * self.market1.Hj) - self.market1.Ld)/(self.market1.lambdai*self.market1.Hi + (1 - self.market1.lambdaj) * self.market1.Hj)
-        self.market2.urate = ((self.market2.lambdai*self.market2.Hi + (1 - self.market2.lambdaj) * self.market2.Hj) - self.market2.Ld)/(self.market2.lambdai*self.market2.Hi + (1 - self.market2.lambdaj) * self.market2.Hj)
+        U1 = self.market1.lambdai*(self.market1.Hi - self.market1.Ld) + (1 - self.market1.lambdaj)*(self.market2.Hi - self.market2.Ld)
+        U2 = self.market2.lambdai*(self.market2.Hi - self.market2.Ld) + (1 - self.market2.lambdaj)*(self.market1.Hi - self.market1.Ld)
+        self.market1.urate = U1/(U1 + self.market1.Ld)
+        self.market2.urate = U2/(U2 + self.market2.Ld)
+
+        #self.market1.urate = (self.market1.Hi - self.market1.Ld)/self.market1.Hi
+        #self.market2.urate = (self.market2.Hi - self.market2.Ld)/self.market2.Hi
         print(f"Equilibrium labor demand and supply for market 1 are {self.market1.Ld, self.market1.Ls}")     
         print(f"Equilibrium labor demand and supply for market 2 are {self.market2.Ld, self.market2.Ls}")     
         return self.theta_star
