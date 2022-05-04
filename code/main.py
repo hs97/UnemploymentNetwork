@@ -27,8 +27,11 @@ A = np.array(dfA.iloc[:,1:],dtype='float64')
 
 # Sahin et al baseline
 sahin_yearly = mismatch_estimation(dfLabor_market_yearly,objective,φ,η,np.ones_like(φ),np.ones_like(φ),m_cd,mu_cd,Lones,guessrange=0.01)
-
+sahin_yearly.to_csv('Sahin_mismatch.csv')
+plt.plot(sahin_yearly.index, sahin_yearly['mismatch index'])
+plt.show()
 # With production network
 networks_yearly = mismatch_estimation(dfLabor_market_yearly,objective,φ,η,λ,α,m_cd,mu_cd,Lstar)
+networks_yearly.to_csv('networks_mismatch.csv')
 
 print('done')

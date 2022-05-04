@@ -5,30 +5,29 @@ from scipy.optimize import root
 
 # cobb-douglas matching function and first derivative
 
-def m_cd(u,v,φ,η):
+def m_cd(u, v, φ, η):
     # takes np arrays ofvacancies, unemployment rates, matching efficiencies, and vacancy weight in matching function
     # returns number of matches
-    U = np.power(u,1-η)
-    V = np.power(v,η)
+    U = np.power(u, 1-η)
+    V = np.power(v, η)
     return φ*V*U
 
-def mu_cd(u,v,φ,η):
+def mu_cd(u, v, φ, η):
     # takes np arrays ofvacancies, unemployment rates, matching efficiencies, and vacancy weight in matching function
     # returns marginal increase matches per increase in unemployment
     τ = np.power(v/u,η)
     return φ*τ
 
-def Lstar(u,v,e,φ,η,mfunc):
+def Lstar(u, v, e, φ, η, mfunc):
     # takes np arrays ofvacancies, unemployment rates, existing labor stocks, matching efficiencies, parameters of matching function, and a matching function
     # in cobb-douglas case, η is just the vacancy weight of vacancies, but can accomodate more general cases
     # realized labor in each sector
-    return e + mfunc(u,v,φ,η)
+    return e + mfunc(u, v, φ, η)
 
-def Lones(u,v,e,φ,η,mfunc):
+def Lones(u, v, e, φ, η, mfunc):
     return np.ones(u.shape[0])
 
-def objective(uopt,v,e,φ,η,λ,α,mfunc,mufunc,Lfunc):
-    
+def objective(uopt, v, e, φ, η, λ, α, mfunc, mufunc, Lfunc):
     #matching function componenets
     if np.any(uopt <= 0):
         obj = np.ones_like(v)*10000
@@ -39,7 +38,7 @@ def objective(uopt,v,e,φ,η,λ,α,mfunc,mufunc,Lfunc):
         
         obj      = np.empty_like(uopt)
         obj[:-1] = FOC[0] - FOC[1:] 
-        obj[-1]  = np.sum(uopt+e) - 1
+        obj[-1]  = np.sum(uopt + e) - 1
 
     return obj
 
@@ -70,16 +69,15 @@ def ustar(objective,v,e,φ,η,λ,α,mfunc,mufunc,Lfunc,uguess_mean=np.array([]),
     return  np.mean(out_mat,axis=0), success
 
 # Mismatch index measures and optimal unemployment 
-def Mindex(u,uopt,v,φ,η,mfunc):
-    h    = mfunc(u,v,φ,η)
+def Mindex(u, uopt, v, φ, η, mfunc):
+    h    = mfunc(u, v, φ, η)
     hopt = mfunc(uopt,v,φ,η)
     return 1 - np.sum(h)/np.sum(hopt)
 
-
 # Function that runs code once for each time period in the data
-
-def mismatch_estimation(df,objective,φ,η,λ,α,mfunc,mufunc,Lfunc,tol=1e-6,maxiter=1e5,ntrue=100,guessrange=0.1):
-    output = pd.DataFrame(index=df.date.unique(),columns=df.BEA_sector.unique())
+def mismatch_estimation(df,objective, φ, η, λ, α, mfunc, mufunc,
+                        Lfunc, tol=1e-8, maxiter=1e5, ntrue=100, guessrange=0.1):
+    output = pd.DataFrame(index=df.date.unique(), columns=df.BEA_sector.unique())
     M_t    = np.zeros(df.date.unique().shape[0]) 
        
     for i in range(df.date.unique().shape[0]):
@@ -90,9 +88,12 @@ def mismatch_estimation(df,objective,φ,η,λ,α,mfunc,mufunc,Lfunc,tol=1e-6,max
         u    = uraw/np.sum(eraw+uraw)
         v    = vraw/np.sum(eraw+uraw)
            
-        ustar_t, success = ustar(objective,v,e,φ,η,λ,α,mfunc,mufunc,Lfunc,uguess_mean=u,tol=tol,maxiter=maxiter,ntrue=ntrue,guessrange=guessrange)
+        ustar_t, success = ustar(objective, v, e, φ, η, λ, α, mfunc,
+                                 mufunc, Lfunc, uguess_mean=u,
+                                 tol=tol, maxiter=maxiter, ntrue=ntrue,
+                                 guessrange=guessrange)
         output.iloc[i,:] = ustar_t
-        M_t[i]  = Mindex(u,ustar_t,v,φ,η,mfunc)
+        M_t[i]  = Mindex(u, ustar_t, v, φ, η, mfunc)
         print('Date successful: ' + str(success))
     
     output['mismatch index'] = M_t
