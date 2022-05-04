@@ -75,6 +75,11 @@ def Mindex(u,uopt,v,φ,η,mfunc):
 
 # Function that runs code once for each time period in the data
 
+def cal_ustars(df,objective,v,e,φ,η,λ,α,mfunc,mufunc,Lfunc,uguess_mean=np.array([]),tol=1e-6,maxiter=1e4,ntrue=100,guessrange=0.1):
+    
+    return
+
+
 def ucounterfactual(u,uopt,Mfunc):
     return
 
