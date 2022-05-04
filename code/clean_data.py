@@ -94,16 +94,24 @@ if __name__ == "__main__":
     phi = pd.merge(merge_map[['Sahin_sector', 'BEA_sector']].drop_duplicates(), phi, on='Sahin_sector').drop(columns='Sahin_sector')
     params = params.join(phi.set_index('BEA_sector'))
     params.to_csv('data/clean/params.csv')
+    employment = pd.read_csv('data/raw/EstabSurv_Employ_ind.csv')
+    employment = pd.melt(employment, id_vars='year', var_name='Sahin_sector', value_name='e')
+    employment['Sahin_sector'] = employment['Sahin_sector'].str[1:]
+    employment = pd.merge(merge_map[['Sahin_sector', 'BEA_sector']].drop_duplicates(), employment, on='Sahin_sector').drop(columns='Sahin_sector')
+    employment['date'] = pd.to_datetime(employment['year'], format='%b-%Y')
+    employment.drop(columns='year', inplace=True)
     # Read in JOLTs data including sector-specific unemployment and vacancies. 
     JOLTs = pd.read_stata("data/raw/jolts_industry_fulldata.dta")[['date', 'ind', 'year', 'v', 'u']].rename(columns={'ind':'Sahin_sector'})
     JOLTs = pd.merge(merge_map[['Sahin_sector', 'BEA_sector']].drop_duplicates(), JOLTs, on='Sahin_sector').drop(columns='Sahin_sector')
+    JOLTs['date'] = pd.to_datetime(JOLTs['date'], format='%Y%m')
+    JOLTs = pd.merge(JOLTs, employment, on=['BEA_sector', 'date'], how='left')
     # Compute aggregate unemployment monthly and annually. 
     # Also aggregate monthly observations into annual observations. 
     U_monthly = JOLTs.groupby('date')['u'].sum().reset_index().rename(columns={'u': 'U_monthly'})
-    JOLTs_monthly = pd.merge(JOLTs[['BEA_sector', 'date', 'v', 'u']], U_monthly, on='date')
-    JOLTs_monthly.to_csv('data/clean/JOLTs_monthly.csv', index=False)
+    JOLTs_monthly = pd.merge(JOLTs[['BEA_sector', 'date', 'v', 'u', 'e']], U_monthly, on='date')
+    JOLTs_monthly.to_csv('data/clean/labor_market_monthly.csv', index=False)
     JOLTs_yearly = JOLTs[JOLTs['year'] != 2000]
-    JOLTs_yearly = JOLTs_yearly.groupby(['year', 'BEA_sector']).agg({'v':'sum', 'u':'sum'}).reset_index()
+    JOLTs_yearly = JOLTs_yearly.groupby(['year', 'BEA_sector']).agg({'v':'sum', 'u':'sum', 'e':'sum'}).reset_index()
     U_yearly = JOLTs_yearly.groupby('year')['u'].sum().reset_index().rename(columns={'u': 'U_yearly'})
     JOLTs_yearly = pd.merge(JOLTs_yearly, U_yearly, on='year')
-    JOLTs_yearly.to_csv('data/clean/JOLTs_yearly.csv', index=False)
+    JOLTs_yearly.to_csv('data/clean/labor_market_yearly.csv', index=False)
