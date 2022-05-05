@@ -29,13 +29,15 @@ A = np.array(dfA.iloc[:,1:],dtype='float64')
 η = 0.5
 
 # Sahin et al baseline
-sahin_yearly = mismatch_estimation(dfLabor_market_yearly,objective,φ,η,np.ones_like(φ),np.ones_like(φ),m_cd,mu_cd,Lones,guessrange=0.01,ntrue=100,tol=1e-8)
-sahin_monthly = mismatch_estimation(dfLabor_market_monthly,objective,φ,η,np.ones_like(φ),np.ones_like(φ),m_cd,mu_cd,Lones,guessrange=0.01,ntrue=100,tol=1e-8)
-sahin_monthly.mHP(10)
+sahin_yearly = mismatch_estimation(dfLabor_market_yearly,objective,φ,η,np.ones_like(φ),np.ones_like(φ),m_cd,mu_cd,Lones,guessrange=0.01,ntrue=2,tol=1e-8)
+sahin_monthly = mismatch_estimation(dfLabor_market_monthly,objective,φ,η,np.ones_like(φ),np.ones_like(φ),m_cd,mu_cd,Lones,guessrange=0.01,ntrue=2,tol=1e-8)
+sahin_monthly.mHP(10,'sahin_monthly',600)
+sahin_monthly.sector_level('sahin_monthly',600)
 
 # With production network
-networks_yearly = mismatch_estimation(dfLabor_market_yearly,objective,φ,η,λ,α,m_cd,mu_cd,Lstar,guessrange=0.01,ntrue=100,tol=1e-8)
-networks_monthly = mismatch_estimation(dfLabor_market_monthly,objective,φ,η,λ,α,m_cd,mu_cd,Lstar,guessrange=0.01,ntrue=100,tol=1e-8)
-networks_monthly.mHP(10)
+networks_yearly = mismatch_estimation(dfLabor_market_yearly,objective,φ,η,λ,α,m_cd,mu_cd,Lstar,guessrange=0.01,ntrue=2,tol=1e-8)
+networks_monthly = mismatch_estimation(dfLabor_market_monthly,objective,φ,η,λ,α,m_cd,mu_cd,Lstar,guessrange=0.01,ntrue=2,tol=1e-8)
+networks_monthly.mHP(10,'networks_monthly',600)
+networks_monthly.sector_level('networks_monthly',600)
 
 print('done')

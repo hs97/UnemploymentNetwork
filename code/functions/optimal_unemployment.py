@@ -2,6 +2,7 @@ import numpy as np
 from numba import njit
 import pandas as pd
 from scipy.optimize import root
+import matplotlib.pyplot as plt
 
 # cobb-douglas matching function and first derivative
 
@@ -75,18 +76,23 @@ def Mindex(u,uopt,v,φ,η,mfunc):
     hopt = mfunc(uopt,v,φ,η)
     return 1 - np.sum(h)/np.sum(hopt)
 
+def Mindex_sectoral(u,uopt,v,φ,η,mfunc):
+    h    = mfunc(u,v,φ,η)
+    hopt = mfunc(uopt,v,φ,η)
+    return 1 - h/hopt
+
 
 # Function that runs code once for each time period in the data
 
 class mismatch_estimation:
-    def __init__(self,df,objective,φ,η,λ,α,mfunc,mufunc,Lfunc,tol=1e-6,maxiter=1e5,ntrue=100,guessrange=0.1):
+    def __init__(self,df,objective,φ,η,λ,α,mfunc,mufunc,Lfunc,tol=1e-6,maxiter=1e5,ntrue=100,guessrange=0.1,outpath='code/output/'):
         self.input  = df
         self.input  = self.input.rename(columns={'v':'vraw','u':'uraw','e':'eraw'})
         self.input['v'] = self.input['vraw']
         self.input['u'] = self.input['uraw']
         self.input['e'] = self.input['eraw']
 
-        self.param  = {'φ':φ,'η':η,'λ':λ,'α':α}
+        self.param  = {'φ':φ,'η':η,'λ':λ,'α':α,'mfunc':mfunc,'mufunc':mufunc,'Lfunc':Lfunc,'Nsector':self.input.BEA_sector.unique().shape[0],'outpath':outpath}
         self.output = pd.DataFrame(index=df.date.unique(),columns=df.BEA_sector.unique())
         self.M_t    = np.zeros(df.date.unique().shape[0])
         for i in range(df.date.unique().shape[0]):
@@ -96,9 +102,9 @@ class mismatch_estimation:
             e    = eraw/np.sum(eraw+uraw)
             u    = uraw/np.sum(eraw+uraw)
             v    = vraw/np.sum(eraw+uraw)
-            self.input.eraw.iloc[self.input.date==self.input.date.unique()[i]] = e 
-            self.input.uraw.iloc[self.input.date==self.input.date.unique()[i]] = u 
-            self.input.vraw.iloc[self.input.date==self.input.date.unique()[i]] = v 
+            self.input.e.iloc[self.input.date==self.input.date.unique()[i]] = e 
+            self.input.u.iloc[self.input.date==self.input.date.unique()[i]] = u 
+            self.input.v.iloc[self.input.date==self.input.date.unique()[i]] = v 
             
             ustar_t, success = ustar(objective,v,e,φ,η,λ,α,mfunc,mufunc,Lfunc,uguess_mean=u,tol=tol,maxiter=maxiter,ntrue=ntrue,guessrange=guessrange)
             self.output.iloc[i,:] = ustar_t
@@ -108,13 +114,39 @@ class mismatch_estimation:
     
         self.output['mismatch_index'] = self.M_t 
 
-    def mHP(self,HP_λ):
+    def mHP(self,HP_λ,fname,dpi):
         self.output['mismatch_trend'], self.output['mismatch_cycle'] = HP(self.M_t,HP_λ)
+        self.mHP_plot, ax = plt.subplots(1,1,dpi = dpi)
+        ax.plot(self.output.index,self.output.mismatch_trend,'-k')
+        ax.set_xlabel('Date')
+        ax.set_ylabel('Mismatch index')
+        plt.savefig(self.param['outpath'] + fname + '_mismatch.png')
 
 
-def ucounterfactual(u,uopt,Mfunc):
+    def sector_level(self,fname,dpi): 
+        self.dU_sector_level = pd.DataFrame(index = self.output.index,columns=self.input.BEA_sector.unique())
+        self.M_sector_level  = pd.DataFrame(index = self.output.index,columns=self.input.BEA_sector.unique())
+        for i in range(self.output.index.shape[0]):
+            self.dU_sector_level.iloc[i,:] = (np.array(self.output.iloc[i,:self.param['Nsector']])-np.array(self.input.u[self.input.date==self.output.index[i]]))*100
+            self.M_sector_level.iloc[i,:]  = Mindex_sectoral(np.array(self.input.u[self.input.date==self.output.index[i]]),np.array(self.output.iloc[i,:self.param['Nsector']]),np.array(self.input.v[self.input.date==self.output.index[i]]),self.param['φ'],self.param['η'],self.param['mfunc'])
 
-    return
+        self.dU_sectoral_plot, ax = plt.subplots(1,1,dpi = dpi)
+        for i, name in enumerate(self.dU_sector_level.columns):
+            ax.plot(self.dU_sector_level.index, self.dU_sector_level.iloc[:,i], label=name)
+            ax.legend(fontsize='xx-small',loc='lower left',ncol=2)
+        ax.set_xlabel('Date')
+        ax.set_ylabel('Change in Unemployment')
+        ax.set_title('Sectoral Changes in Unemployment')
+        plt.savefig(self.param['outpath'] + fname + '_sectoral_unemployment_change.png')
+
+        self.M_sectoral_plot, ax = plt.subplots(1,1,dpi = dpi)
+        for i, name in enumerate(self.dU_sector_level.columns):
+            ax.plot(self.M_sector_level.index, self.M_sector_level.iloc[:,i], label=name)
+            ax.legend(fontsize='xx-small',loc='lower left',ncol=2)
+        ax.set_xlabel('Date')
+        ax.set_ylabel('Mismatch Index')
+        ax.set_title('Sectoral Mismatch Index')
+        plt.savefig(self.param['outpath'] + fname + '_sectoral_mismatch_index.png')
 
 # Filtering functions
 
