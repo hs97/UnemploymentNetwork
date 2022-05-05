@@ -28,9 +28,6 @@ def Lstar(u, v, e, φ, η, mfunc):
 def Lones(u, v, e, φ, η, mfunc):
     return np.ones(u.shape[0])
 
-<<<<<<< HEAD
-def objective(uopt, v, e, φ, η, λ, α, mfunc, mufunc, Lfunc):
-=======
 def ustar_objective(uopt,param):
     
     v = param['v']
@@ -42,7 +39,6 @@ def ustar_objective(uopt,param):
     mfunc  = param['mfunc']
     mufunc = param['mufunc']
     Lfunc  = param['Lfunc']
->>>>>>> 46086e3386812960016eeca108ca97654ba16f20
     #matching function componenets
     if np.any(uopt <= 0):
         obj = np.ones_like(v)*10000
@@ -57,29 +53,14 @@ def ustar_objective(uopt,param):
 
     return obj
 
-<<<<<<< HEAD
-def ustar(objective, v, e, φ, η, λ, α, mfunc,
-          mufunc, Lfunc, uguess_mean=np.array([]),
-          tol=1e-6, maxiter=1e4, ntrue=100, guessrange=0.1):
-    # wrapper for scipy root in ustar notation, 
-    # also implements robustness to intial guess with randomly generated intital guesses
-=======
+
 def root_robust(objective,param,uguess_mean=np.array([]),tol=1e-6,maxiter=1e4,ntrue=100,guessrange=0.1):
     #wrapper for scipy root in ustar notation, also implements robustness to intial guess with randomly generated intital guesses
->>>>>>> 46086e3386812960016eeca108ca97654ba16f20
     if uguess_mean.shape[0] == 0:
         raise Exception('Must provide initial guess')
     count_true = 0
     out_mat    = np.array([])
-<<<<<<< HEAD
-    itercount  = 0
-    while count_true < ntrue and itercount < maxiter:
-        uguess = np.zeros_like(v)
-        for i in range(v.shape[0]):
-            uguess[i] = np.random.uniform(uguess_mean[i]- guessrange/2, uguess_mean[i]+guessrange/2,1)
-        uguess = np.abs(uguess)
-        us = root(objective,uguess,args=(v, e, φ, η, λ, α, mfunc, mufunc, Lfunc), method='hybr', tol=tol)
-=======
+
     itercount = 0
     while count_true<ntrue and itercount<maxiter:
         uguess = np.zeros_like(uguess_mean)
@@ -87,17 +68,13 @@ def root_robust(objective,param,uguess_mean=np.array([]),tol=1e-6,maxiter=1e4,nt
             uguess[i] = np.random.uniform(uguess_mean[i]-guessrange/2,uguess_mean[i]+guessrange/2,1)
         uguess = np.abs(uguess)
         us = root(objective,uguess,args=(param),method='hybr',tol=tol)
->>>>>>> 46086e3386812960016eeca108ca97654ba16f20
         count_true += us.success
         itercount  += 1
         if us.success == True:
             out_mat = np.append(out_mat,us.x)
             #print('Num converged: ' + str(count_true))
-<<<<<<< HEAD
-    out_mat = out_mat.reshape((ntrue, v.shape[0]))
-=======
+
     out_mat = out_mat.reshape((ntrue,uguess_mean.shape[0]))
->>>>>>> 46086e3386812960016eeca108ca97654ba16f20
     out_gap = out_mat - out_mat[0,:]
     if np.max(np.abs(out_gap))>10*tol:
         success = False
@@ -111,12 +88,6 @@ def Mindex(u, uopt, v, φ, η, mfunc):
     hopt = mfunc(uopt, v, φ, η)
     return 1 - np.sum(h)/np.sum(hopt)
 
-<<<<<<< HEAD
-# Function that runs code once for each time period in the data
-
-class mismatch_estimation:
-    def __init__(self,df,objective,φ,η,λ,α,mfunc,mufunc,Lfunc,tol=1e-8,maxiter=1e5,ntrue=100,guessrange=0.1):
-=======
 def Mindex_sectoral(u,uopt,v,φ,η,mfunc):
     h    = mfunc(u,v,φ,η)
     hopt = mfunc(uopt,v,φ,η)
@@ -129,7 +100,6 @@ def Mindex_sectoral(u,uopt,v,φ,η,mfunc):
 
 class mismatch_estimation:
     def __init__(self,df,param,tol=1e-6,maxiter=1e5,ntrue=100,guessrange=0.1,outpath='code/output/'):
->>>>>>> 46086e3386812960016eeca108ca97654ba16f20
         self.input  = df
         self.input  = self.input.rename(columns={'v':'vraw','u':'uraw','e':'eraw'})
         self.input['v'] = self.input['vraw']
@@ -155,12 +125,7 @@ class mismatch_estimation:
             self.param['v'] = v
             self.param['e'] = e
             
-<<<<<<< HEAD
-            ustar_t, success = ustar(objective, v, e, φ, η, λ, α, mfunc, mufunc, Lfunc,
-                                     uguess_mean=u, tol=tol, maxiter=maxiter, ntrue=ntrue, guessrange=guessrange)
-=======
             ustar_t, success = root_robust(self.param['objective'],self.param,uguess_mean=u,tol=tol,maxiter=maxiter,ntrue=ntrue,guessrange=guessrange)
->>>>>>> 46086e3386812960016eeca108ca97654ba16f20
             self.output.iloc[i,:] = ustar_t
             self.M_t[i]  = Mindex(u,ustar_t,v,self.param['φ'],self.param['η'],self.param['mfunc'])
             print('Starting date: ' + str(df.date.unique()[i]))
@@ -168,15 +133,6 @@ class mismatch_estimation:
     
         self.output['mismatch_index'] = self.M_t 
 
-<<<<<<< HEAD
-    def mHP(self,HP_λ):
-        self.output['mismatch_trend'], self.output['mismatch_cycle'] = HP(self.M_t, HP_λ)
-
-def ucounterfactual(u, uopt, Mfunc):
-
-    return
-
-=======
     def mHP(self,HP_λ,fname,dpi):
         self.output['mismatch_trend'], self.output['mismatch_cycle'] = HP(self.M_t,HP_λ)
         self.mHP_plot, ax = plt.subplots(1,1,dpi = dpi)
@@ -249,8 +205,6 @@ def ucounterfactual(u, uopt, Mfunc):
         #self.Ystar = 
         return
 
-
->>>>>>> 46086e3386812960016eeca108ca97654ba16f20
 # Filtering functions
 
 def HP(y,λ):
