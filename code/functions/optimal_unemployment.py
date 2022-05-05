@@ -173,43 +173,38 @@ class mismatch_estimation:
         plt.savefig(self.param['outpath'] + fname + '_sectoral_mismatch_index.png')
 
         #scatter plots of lambda, alpha,lambda*alpha, e with v, phi
-        self.v_scatter, ax = plt.subplots(2,2,dpi=dpi)
-        plt.rcParams['font.size'] = '6'
-        ax[0,0].plot(self.input.v,np.tile(self.param['λ'],self.input.date.unique().shape[0]),'o')
-        ax[0,0].set_ylabel('λ')
-        ax[0,0].set_xlabel('v')
-        ax[0,1].plot(self.input.v,np.tile(self.param['α'],self.input.date.unique().shape[0]),'o')
-        ax[0,1].set_ylabel('α')
-        ax[0,1].set_xlabel('v')
-        ax[1,0].plot(self.input.v,np.tile(self.param['λ']*self.param['α'],self.input.date.unique().shape[0]),'o')
-        ax[1,0].set_ylabel('λα')
-        ax[1,0].set_xlabel('v')
-        ax[1,1].plot(self.input.v,np.tile(self.param['e'],self.input.date.unique().shape[0]),'o')
-        ax[1,1].set_ylabel('e')
-        ax[1,1].set_xlabel('v')
-        plt.savefig(self.param['outpath'] + fname + '_v_sectoral_scatter.png')
+        self.sectoral_scatter(self.input.v,'v',fname+'_v',dpi)
+        self.sectoral_scatter(np.tile(self.param['φ'],self.input.date.unique().shape[0]),'φ',fname+'_phi',dpi)
 
-        self.φ_scatter, ax = plt.subplots(2,2,dpi=dpi)
+    def sectoral_scatter(self,x,xlab,fname,dpi):
+        self.scatter, ax = plt.subplots(2,2,dpi=dpi)
         plt.rcParams['font.size'] = '6'
-        ax[0,0].plot(self.param['φ'],self.param['λ'],'o')
+        ax[0,0].plot(x,np.tile(self.param['λ'],self.input.date.unique().shape[0]),'o')
+        m,b = np.polyfit(x, np.tile(self.param['λ'],self.input.date.unique().shape[0]), 1)
+        ax[0,0].plot(x,m*x+b,":r")
         ax[0,0].set_ylabel('λ')
-        ax[0,0].set_xlabel('φ')
-        ax[0,1].plot(self.param['φ'],self.param['α'],'o')
+        ax[0,0].set_xlabel(xlab)
+        ax[0,1].plot(x,np.tile(self.param['α'],self.input.date.unique().shape[0]),'o')
+        m,b = np.polyfit(x, np.tile(self.param['α'],self.input.date.unique().shape[0]), 1)
+        ax[0,1].plot(x,m*x+b,":r")
         ax[0,1].set_ylabel('α')
-        ax[0,1].set_xlabel('φ')
-        ax[1,0].plot(self.param['φ'],self.param['λ']*self.param['α'],'o')
+        ax[0,1].set_xlabel(xlab)
+        ax[1,0].plot(x,np.tile(self.param['λ']*self.param['α'],self.input.date.unique().shape[0]),'o')
+        m,b = np.polyfit(x, np.tile(self.param['λ']*self.param['α'],self.input.date.unique().shape[0]), 1)
+        ax[1,0].plot(x,m*x+b,":r")
         ax[1,0].set_ylabel('λα')
-        ax[1,0].set_xlabel('φ')
-        ax[1,1].plot(self.param['φ'],self.param['e'],'o')
+        ax[1,0].set_xlabel(xlab)
+        ax[1,1].plot(x,self.input.e,'o')
+        m,b = np.polyfit(x, self.input.e, 1)
+        ax[1,1].plot(x,m*x+b,":r")
         ax[1,1].set_ylabel('e')
-        ax[1,1].set_xlabel('φ')
-        plt.savefig(self.param['outpath'] + fname + '_phi_sectoral_scatter.png')
-
+        ax[1,1].set_xlabel(xlab)
+        plt.savefig(self.param['outpath'] + fname + '_sectoral_scatter.png')
+    
     def social_welfare(self):
         #self.Y     = 
         #self.Ystar = 
         return
-
 
 # Filtering functions
 
