@@ -137,6 +137,6 @@ ax.plot(αeq1_monthly.output.index,αeq1_monthly.output.mismatch_trend,'--r',lab
 ax.set_xlabel('Date')
 ax.set_ylabel('Mismatch Index')
 ax.legend()
-plt.savefig('code/output/mismatch_index_comparison_alpha_eq1.png')
+plt.savefig('code/output/mismatch_index_comparison_alphaeq1.png')
 
 print('done')
