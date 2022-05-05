@@ -91,6 +91,14 @@ def Mindex_sectoral(u,uopt,v,φ,η,mfunc):
     return 1 - h/hopt
 
 # Production function and social welfare function, check that solution improves welfare
+def firm_FOC():
+    return
+
+def household_FOC():
+    return
+
+def market_clearing():
+    return
 
 
 # Function that runs code once for each time period in the data

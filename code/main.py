@@ -17,7 +17,7 @@ dfLabor_market_yearly = dfLabor_market_yearly.rename(columns={'year':'date'})
 dfLabor_market_monthly = dfLabor_market_monthly.sort_values(by=['date','BEA_sector'])
 dfLabor_market_yearly  = dfLabor_market_yearly.sort_values(by=['date','BEA_sector'])
 dfLabor_market_monthly = dfLabor_market_monthly.dropna(axis=0)
-dfLabor_market_yearly = dfLabor_market_yearly.dropna(axis=0)
+dfLabor_market_yearly  = dfLabor_market_yearly.dropna(axis=0)
 
 
 # reformatting parameters
@@ -28,19 +28,40 @@ A = np.array(dfA.iloc[:,1:],dtype='float64')
 θ = np.array(dfParam.θ)
 η = 0.5
 
-param = {'A':A,'φ':φ,'λ':λ,'α':α,'θ':θ,'η':η,'mfunc':m_cd,'mufunc':mu_cd,'Lfunc':Lones,'objective':ustar_objective}
+param_sahin = {'A':A,'φ':φ,'λ':np.ones_like(λ),'α':np.ones_like(α),'θ':θ,'η':η,'mfunc':m_cd,'mufunc':mu_cd,'Lfunc':Lones,'objective':ustar_objective}
 
 # Sahin et al baseline
-sahin_yearly = mismatch_estimation(dfLabor_market_yearly,param,guessrange=0.01,ntrue=2,tol=1e-8)
-sahin_monthly = mismatch_estimation(dfLabor_market_monthly,param,guessrange=0.01,ntrue=2,tol=1e-8)
+sahin_yearly = mismatch_estimation(dfLabor_market_yearly,param_sahin,guessrange=0.01,ntrue=2,tol=1e-8)
+sahin_monthly = mismatch_estimation(dfLabor_market_monthly,param_sahin,guessrange=0.01,ntrue=2,tol=1e-8)
 sahin_monthly.mHP(10,'sahin_monthly',600)
 sahin_monthly.sector_level('sahin_monthly',600)
 
 # With production network
-param['Lfunc'] = Lstar
-networks_yearly = mismatch_estimation(dfLabor_market_yearly,param,guessrange=0.01,ntrue=2,tol=1e-8)
-networks_monthly = mismatch_estimation(dfLabor_market_monthly,param,guessrange=0.01,ntrue=2,tol=1e-8)
+param_networks = {'A':A,'φ':φ,'λ':λ,'α':α,'θ':θ,'η':η,'mfunc':m_cd,'mufunc':mu_cd,'Lfunc':Lstar,'objective':ustar_objective}
+networks_yearly = mismatch_estimation(dfLabor_market_yearly,param_networks,guessrange=0.01,ntrue=2,tol=1e-8)
+networks_monthly = mismatch_estimation(dfLabor_market_monthly,param_networks,guessrange=0.01,ntrue=2,tol=1e-8)
 networks_monthly.mHP(10,'networks_monthly',600)
 networks_monthly.sector_level('networks_monthly',600)
+
+# Figures 
+fig_aggregate_mismatch, ax = plt.subplots(1,1,dpi=600)
+ax.plot(sahin_monthly.output.index,sahin_monthly.output.mismatch_trend,'-k',label='Horizontal Economy')
+ax.plot(networks_monthly.output.index,networks_monthly.output.mismatch_trend,'--r',label='Network Economy')
+ax.set_xlabel('Date')
+ax.set_ylabel('Mismatch Index')
+ax.legend()
+plt.savefig('code/output/mismatch_index_comparison.png')
+
+fig_aggregate_mismatch_2ax, ax1 = plt.subplots(1,1,dpi=600)
+ax1.plot(sahin_monthly.output.index,sahin_monthly.output.mismatch_trend,'-k',label='Horizontal Economy')
+ax1.set_xlabel('Date')
+ax1.set_ylabel('Horizontal Economy Mismatch Index')
+ax2 = ax1.twinx()
+ax2.plot(networks_monthly.output.index,networks_monthly.output.mismatch_trend,'--r',label='Network Economy')
+ax2.set_xlabel('Date')
+ax2.set_ylabel('Network Economy Mismatch Index')
+ax1.legend()
+ax2.legend()
+plt.savefig('code/output/mismatch_index_comparison_2ax.png')
 
 print('done')
