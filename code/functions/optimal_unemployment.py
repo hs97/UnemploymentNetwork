@@ -28,8 +28,17 @@ def Lstar(u,v,e,φ,η,mfunc):
 def Lones(u,v,e,φ,η,mfunc):
     return np.ones(u.shape[0])
 
-def objective(uopt,v,e,φ,η,λ,α,mfunc,mufunc,Lfunc):
+def ustar_objective(uopt,param):
     
+    v = param['v']
+    e = param['e']
+    φ = param['φ']
+    η = param['η']
+    λ = param['λ']
+    α = param['α']
+    mfunc  = param['mfunc']
+    mufunc = param['mufunc']
+    Lfunc  = param['Lfunc']
     #matching function componenets
     if np.any(uopt <= 0):
         obj = np.ones_like(v)*10000
@@ -44,25 +53,25 @@ def objective(uopt,v,e,φ,η,λ,α,mfunc,mufunc,Lfunc):
 
     return obj
 
-def ustar(objective,v,e,φ,η,λ,α,mfunc,mufunc,Lfunc,uguess_mean=np.array([]),tol=1e-6,maxiter=1e4,ntrue=100,guessrange=0.1):
+def root_robust(objective,param,uguess_mean=np.array([]),tol=1e-6,maxiter=1e4,ntrue=100,guessrange=0.1):
     #wrapper for scipy root in ustar notation, also implements robustness to intial guess with randomly generated intital guesses
     if uguess_mean.shape[0] == 0:
-        uguess_mean = np.ones_like(v)*(1-np.sum(v+e))
+        raise Exception('Must provide initial guess')
     count_true = 0
     out_mat    = np.array([])
     itercount = 0
     while count_true<ntrue and itercount<maxiter:
-        uguess = np.zeros_like(v)
-        for i in range(v.shape[0]):
+        uguess = np.zeros_like(uguess_mean)
+        for i in range(uguess_mean.shape[0]):
             uguess[i] = np.random.uniform(uguess_mean[i]-guessrange/2,uguess_mean[i]+guessrange/2,1)
         uguess = np.abs(uguess)
-        us = root(objective,uguess,args=(v,e,φ,η,λ,α,mfunc,mufunc,Lfunc),method='hybr',tol=tol)
+        us = root(objective,uguess,args=(param),method='hybr',tol=tol)
         count_true += us.success
         itercount  += 1
         if us.success == True:
             out_mat = np.append(out_mat,us.x)
             #print('Num converged: ' + str(count_true))
-    out_mat = out_mat.reshape((ntrue,v.shape[0]))
+    out_mat = out_mat.reshape((ntrue,uguess_mean.shape[0]))
     out_gap = out_mat - out_mat[0,:]
     if np.max(np.abs(out_gap))>10*tol:
         success = False
@@ -81,18 +90,23 @@ def Mindex_sectoral(u,uopt,v,φ,η,mfunc):
     hopt = mfunc(uopt,v,φ,η)
     return 1 - h/hopt
 
+# Production function and social welfare function, check that solution improves welfare
+
 
 # Function that runs code once for each time period in the data
 
 class mismatch_estimation:
-    def __init__(self,df,objective,φ,η,λ,α,mfunc,mufunc,Lfunc,tol=1e-6,maxiter=1e5,ntrue=100,guessrange=0.1,outpath='code/output/'):
+    def __init__(self,df,param,tol=1e-6,maxiter=1e5,ntrue=100,guessrange=0.1,outpath='code/output/'):
         self.input  = df
         self.input  = self.input.rename(columns={'v':'vraw','u':'uraw','e':'eraw'})
         self.input['v'] = self.input['vraw']
         self.input['u'] = self.input['uraw']
         self.input['e'] = self.input['eraw']
+        
+        self.param  = param
+        self.param['Nsector']  = self.input.BEA_sector.unique().shape[0]
+        self.param['outpath']  = outpath
 
-        self.param  = {'φ':φ,'η':η,'λ':λ,'α':α,'mfunc':mfunc,'mufunc':mufunc,'Lfunc':Lfunc,'Nsector':self.input.BEA_sector.unique().shape[0],'outpath':outpath}
         self.output = pd.DataFrame(index=df.date.unique(),columns=df.BEA_sector.unique())
         self.M_t    = np.zeros(df.date.unique().shape[0])
         for i in range(df.date.unique().shape[0]):
@@ -105,10 +119,12 @@ class mismatch_estimation:
             self.input.e.iloc[self.input.date==self.input.date.unique()[i]] = e 
             self.input.u.iloc[self.input.date==self.input.date.unique()[i]] = u 
             self.input.v.iloc[self.input.date==self.input.date.unique()[i]] = v 
+            self.param['v'] = v
+            self.param['e'] = e
             
-            ustar_t, success = ustar(objective,v,e,φ,η,λ,α,mfunc,mufunc,Lfunc,uguess_mean=u,tol=tol,maxiter=maxiter,ntrue=ntrue,guessrange=guessrange)
+            ustar_t, success = root_robust(self.param['objective'],self.param,uguess_mean=u,tol=tol,maxiter=maxiter,ntrue=ntrue,guessrange=guessrange)
             self.output.iloc[i,:] = ustar_t
-            self.M_t[i]  = Mindex(u,ustar_t,v,φ,η,mfunc)
+            self.M_t[i]  = Mindex(u,ustar_t,v,self.param['φ'],self.param['η'],self.param['mfunc'])
             print('Starting date: ' + str(df.date.unique()[i]))
             print('Date successful: ' + str(success))
     
@@ -147,6 +163,45 @@ class mismatch_estimation:
         ax.set_ylabel('Mismatch Index')
         ax.set_title('Sectoral Mismatch Index')
         plt.savefig(self.param['outpath'] + fname + '_sectoral_mismatch_index.png')
+
+        #scatter plots of lambda, alpha,lambda*alpha, e with v, phi
+        self.v_scatter, ax = plt.subplots(2,2,dpi=dpi)
+        plt.rcParams['font.size'] = '6'
+        ax[0,0].plot(self.input.v,np.tile(self.param['λ'],self.input.date.unique().shape[0]),'o')
+        ax[0,0].set_ylabel('λ')
+        ax[0,0].set_xlabel('v')
+        ax[0,1].plot(self.input.v,np.tile(self.param['α'],self.input.date.unique().shape[0]),'o')
+        ax[0,1].set_ylabel('α')
+        ax[0,1].set_xlabel('v')
+        ax[1,0].plot(self.input.v,np.tile(self.param['λ']*self.param['α'],self.input.date.unique().shape[0]),'o')
+        ax[1,0].set_ylabel('λα')
+        ax[1,0].set_xlabel('v')
+        ax[1,1].plot(self.input.v,np.tile(self.param['e'],self.input.date.unique().shape[0]),'o')
+        ax[1,1].set_ylabel('e')
+        ax[1,1].set_xlabel('v')
+        plt.savefig(self.param['outpath'] + fname + '_v_sectoral_scatter.png')
+
+        self.φ_scatter, ax = plt.subplots(2,2,dpi=dpi)
+        plt.rcParams['font.size'] = '6'
+        ax[0,0].plot(self.param['φ'],self.param['λ'],'o')
+        ax[0,0].set_ylabel('λ')
+        ax[0,0].set_xlabel('φ')
+        ax[0,1].plot(self.param['φ'],self.param['α'],'o')
+        ax[0,1].set_ylabel('α')
+        ax[0,1].set_xlabel('φ')
+        ax[1,0].plot(self.param['φ'],self.param['λ']*self.param['α'],'o')
+        ax[1,0].set_ylabel('λα')
+        ax[1,0].set_xlabel('φ')
+        ax[1,1].plot(self.param['φ'],self.param['e'],'o')
+        ax[1,1].set_ylabel('e')
+        ax[1,1].set_xlabel('φ')
+        plt.savefig(self.param['outpath'] + fname + '_phi_sectoral_scatter.png')
+
+    def social_welfare(self):
+        #self.Y     = 
+        #self.Ystar = 
+        return
+
 
 # Filtering functions
 
