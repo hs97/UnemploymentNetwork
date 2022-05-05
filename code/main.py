@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from functions.optimal_unemployment import m_cd, mu_cd, Lstar, Lones, objective, ustar, Mindex, mismatch_estimation
+from functions.optimal_unemployment import m_cd, mu_cd, Lstar, Lones, ustar_objective, mismatch_estimation
 import pandas as pd
 
 # loading data
@@ -28,19 +28,20 @@ A = np.array(dfA.iloc[:,1:],dtype='float64')
 θ = np.array(dfParam.θ)
 η = 0.5
 
+param = {'A':A,'φ':φ,'λ':λ,'α':α,'θ':θ,'η':η,'mfunc':m_cd,'mufunc':mu_cd,'Lfunc':Lones,'objective':ustar_objective}
+
 # Sahin et al baseline
-sahin_yearly = mismatch_estimation(dfLabor_market_yearly,objective,φ,η,np.ones_like(φ),np.ones_like(φ),m_cd,mu_cd,Lones,guessrange=0.01,ntrue=10,tol=1e-8)
-#sahin_monthly = mismatch_estimation(dfLabor_market_monthly,objective,φ,η,np.ones_like(φ),np.ones_like(φ),m_cd,mu_cd,Lones,guessrange=0.01,ntrue=10,tol=1e-8)
-#sahin_monthly.mHP(10)
+
+sahin_yearly = mismatch_estimation(dfLabor_market_yearly,param,guessrange=0.01,ntrue=2,tol=1e-8)
+sahin_monthly = mismatch_estimation(dfLabor_market_monthly,param,guessrange=0.01,ntrue=2,tol=1e-8)
+sahin_monthly.mHP(10,'sahin_monthly',600)
+sahin_monthly.sector_level('sahin_monthly',600)
 
 # With production network
-networks_yearly = mismatch_estimation(dfLabor_market_yearly,objective,φ,η,λ,α,m_cd,mu_cd,Lstar,guessrange=0.01,ntrue=10,tol=1e-8)
-#networks_monthly = mismatch_estimation(dfLabor_market_monthly,objective,φ,η,λ,α,m_cd,mu_cd,Lstar,guessrange=0.01,ntrue=10,tol=1e-8)
-#networks_monthly.mHP(10)
-
-plt.plot(networks_yearly.output.index, networks_yearly.output['mismatch_index'])
-plt.plot(sahin_yearly.output.index, sahin_yearly.output['mismatch_index'])
-plt.show()
-
+param['Lfunc'] = Lstar
+networks_yearly = mismatch_estimation(dfLabor_market_yearly,param,guessrange=0.01,ntrue=2,tol=1e-8)
+networks_monthly = mismatch_estimation(dfLabor_market_monthly,param,guessrange=0.01,ntrue=2,tol=1e-8)
+networks_monthly.mHP(10,'networks_monthly', 600)
+networks_monthly.sector_level('networks_monthly', 600)
 
 print('done')
