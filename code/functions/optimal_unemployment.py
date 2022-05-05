@@ -34,7 +34,7 @@ def objective(uopt, v, e, φ, η, λ, α, mfunc, mufunc, Lfunc):
     else:
         mu  = mufunc(uopt, v, φ, η)
         L   = Lfunc(uopt, v, e, φ, η, mfunc)
-        FOC = λ*α*mu/L 
+        FOC = λ*mu
         
         obj      = np.empty_like(uopt)
         obj[:-1] = FOC[0] - FOC[1:] 
@@ -69,18 +69,18 @@ def ustar(objective, v, e, φ, η, λ, α, mfunc,
         success = False
     else:
         success = True
-    return  np.mean(out_mat,axis=0), success
+    return  np.mean(out_mat, axis=0), success
 
 # Mismatch index measures and optimal unemployment 
 def Mindex(u, uopt, v, φ, η, mfunc):
     h    = mfunc(u, v, φ, η)
-    hopt = mfunc(uopt,v,φ,η)
+    hopt = mfunc(uopt, v, φ, η)
     return 1 - np.sum(h)/np.sum(hopt)
 
 # Function that runs code once for each time period in the data
 
 class mismatch_estimation:
-    def __init__(self,df,objective,φ,η,λ,α,mfunc,mufunc,Lfunc,tol=1e-6,maxiter=1e5,ntrue=100,guessrange=0.1):
+    def __init__(self,df,objective,φ,η,λ,α,mfunc,mufunc,Lfunc,tol=1e-8,maxiter=1e5,ntrue=100,guessrange=0.1):
         self.input  = df
         self.input  = self.input.rename(columns={'v':'vraw','u':'uraw','e':'eraw'})
         self.input['v'] = self.input['vraw']
@@ -101,7 +101,8 @@ class mismatch_estimation:
             self.input.uraw.iloc[self.input.date==self.input.date.unique()[i]] = u 
             self.input.vraw.iloc[self.input.date==self.input.date.unique()[i]] = v 
             
-            ustar_t, success = ustar(objective,v,e,φ,η,λ,α,mfunc,mufunc,Lfunc,uguess_mean=u,tol=tol,maxiter=maxiter,ntrue=ntrue,guessrange=guessrange)
+            ustar_t, success = ustar(objective, v, e, φ, η, λ, α, mfunc, mufunc, Lfunc,
+                                     uguess_mean=u, tol=tol, maxiter=maxiter, ntrue=ntrue, guessrange=guessrange)
             self.output.iloc[i,:] = ustar_t
             self.M_t[i]  = Mindex(u,ustar_t,v,φ,η,mfunc)
             print('Starting date: ' + str(df.date.unique()[i]))
@@ -110,9 +111,9 @@ class mismatch_estimation:
         self.output['mismatch_index'] = self.M_t 
 
     def mHP(self,HP_λ):
-        self.output['mismatch_trend'], self.output['mismatch_cycle'] = HP(self.M_t,HP_λ)
+        self.output['mismatch_trend'], self.output['mismatch_cycle'] = HP(self.M_t, HP_λ)
 
-def ucounterfactual(u,uopt,Mfunc):
+def ucounterfactual(u, uopt, Mfunc):
 
     return
 

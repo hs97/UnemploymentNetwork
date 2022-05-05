@@ -29,13 +29,18 @@ A = np.array(dfA.iloc[:,1:],dtype='float64')
 η = 0.5
 
 # Sahin et al baseline
-sahin_yearly = mismatch_estimation(dfLabor_market_yearly,objective,φ,η,np.ones_like(φ),np.ones_like(φ),m_cd,mu_cd,Lones,guessrange=0.01,ntrue=100,tol=1e-8)
-sahin_monthly = mismatch_estimation(dfLabor_market_monthly,objective,φ,η,np.ones_like(φ),np.ones_like(φ),m_cd,mu_cd,Lones,guessrange=0.01,ntrue=100,tol=1e-8)
-sahin_monthly.mHP(10)
+sahin_yearly = mismatch_estimation(dfLabor_market_yearly,objective,φ,η,np.ones_like(φ),np.ones_like(φ),m_cd,mu_cd,Lones,guessrange=0.01,ntrue=10,tol=1e-8)
+#sahin_monthly = mismatch_estimation(dfLabor_market_monthly,objective,φ,η,np.ones_like(φ),np.ones_like(φ),m_cd,mu_cd,Lones,guessrange=0.01,ntrue=10,tol=1e-8)
+#sahin_monthly.mHP(10)
 
 # With production network
-networks_yearly = mismatch_estimation(dfLabor_market_yearly,objective,φ,η,λ,α,m_cd,mu_cd,Lstar,guessrange=0.01,ntrue=100,tol=1e-8)
-networks_monthly = mismatch_estimation(dfLabor_market_monthly,objective,φ,η,λ,α,m_cd,mu_cd,Lstar,guessrange=0.01,ntrue=100,tol=1e-8)
-networks_monthly.mHP(10)
+networks_yearly = mismatch_estimation(dfLabor_market_yearly,objective,φ,η,λ,α,m_cd,mu_cd,Lstar,guessrange=0.01,ntrue=10,tol=1e-8)
+#networks_monthly = mismatch_estimation(dfLabor_market_monthly,objective,φ,η,λ,α,m_cd,mu_cd,Lstar,guessrange=0.01,ntrue=10,tol=1e-8)
+#networks_monthly.mHP(10)
+
+plt.plot(networks_yearly.output.index, networks_yearly.output['mismatch_index'])
+plt.plot(sahin_yearly.output.index, sahin_yearly.output['mismatch_index'])
+plt.show()
+
 
 print('done')
