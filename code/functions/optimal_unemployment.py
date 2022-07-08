@@ -54,6 +54,61 @@ def ustar_objective(uopt,param):
     return obj
 
 
+# Production function and social welfare function, check that solution improves welfare
+def production_function(A,x,L,α):
+    Xin = np.prod(np.power(x,A),axis=1)
+    Lin = np.power(L,α)
+    y   = Lin*Xin #(Nsector,) array  
+    return y
+
+def firm_FOC(A,x,y,p):
+    # n^2 restrictions from firms FOC
+    P   = np.tile(p,(p.shape[0],1))
+    px  = P*x
+    py  = np.tile(p*y,(p.shape[0],1)).T
+    out = A - np.divide(px,py)
+    return out.reshape((p.shape[0]**2,))
+
+def household_FOC(θ,C,p):
+    #n-1 restrictions from household FOC
+    λ = np.divide(θ,p*C)
+    out = λ[1:] - λ[0]
+    return out
+
+def market_clearing(y,C,x):
+    # n restrictions from market clearing 
+    out = y - C - np.sum(x,axis=0)
+    return out
+
+def full_solution_objective(opt,param):
+    θ = param['θ']
+    if np.any(opt <= 0):
+        obj = np.ones((θ.shape[0]**2+2*θ.shape[0]-1,))*1e12
+    else:
+        α = param['α']
+        A = param['A']
+        L = param['L']
+        yfunc    = param['yfunc']
+        mkt_func = param['mkt_func']
+        hh_foc   = param['hh_foc']
+        f_foc    = param['f_foc']
+
+        n = L.shape[0]
+        x = opt[:n**2].reshape((n,n))
+        C = opt[n**2:n**2+n]
+        
+        p = np.zeros_like(L)
+        p[0]  = 1
+        p[1:] = opt[n**2+n:]
+
+        y = yfunc(A,x,L,α)
+
+        obj = np.zeros_like(opt)
+        obj[:n**2] = f_foc(A,x,y,p)
+        obj[n**2:n**2+n-1] = hh_foc(θ,C,p)
+        obj[n**2+n-1:] = mkt_func(y,C,x)
+    return obj
+
 def root_robust(objective,param,uguess_mean=np.array([]),tol=1e-6,maxiter=1e4,ntrue=100,guessrange=0.1):
     #wrapper for scipy root in ustar notation, also implements robustness to intial guess with randomly generated intital guesses
     if uguess_mean.shape[0] == 0:
@@ -70,10 +125,10 @@ def root_robust(objective,param,uguess_mean=np.array([]),tol=1e-6,maxiter=1e4,nt
         us = root(objective,uguess,args=(param),method='hybr',tol=tol)
         count_true += us.success
         itercount  += 1
+        print('Num attempt: ' + str(itercount))
         if us.success == True:
             out_mat = np.append(out_mat,us.x)
-            #print('Num converged: ' + str(count_true))
-
+            print('Num converged: ' + str(count_true))
     out_mat = out_mat.reshape((ntrue,uguess_mean.shape[0]))
     out_gap = out_mat - out_mat[0,:]
     if np.max(np.abs(out_gap))>10*tol:
@@ -92,16 +147,6 @@ def Mindex_sectoral(u,uopt,v,φ,η,mfunc):
     h    = mfunc(u,v,φ,η)
     hopt = mfunc(uopt,v,φ,η)
     return 1 - h/hopt
-
-# Production function and social welfare function, check that solution improves welfare
-def firm_FOC():
-    return
-
-def household_FOC():
-    return
-
-def market_clearing():
-    return
 
 
 # Function that runs code once for each time period in the data
@@ -204,7 +249,26 @@ class mismatch_estimation:
         ax[1,1].set_xlabel(xlab)
         plt.savefig(self.param['outpath'] + fname + '_sectoral_scatter.png')
     
-    def social_welfare(self):
+    def social_welfare(self,param_sw,tol=1e-8,maxiter=1e5,ntrue=5,guessrange=100):
+        self.param_sw = param_sw
+        self.param_sw['θ'] = self.param['θ']
+        self.param_sw['α'] = self.param['α']
+        self.param_sw['A'] = self.param['A']
+        
+        # For now check only most recent observation in the series 
+        v = np.array(self.input.v[self.input.date==self.input.date.unique()[-1]])
+        u = np.array(self.input.u[self.input.date==self.input.date.unique()[-1]])
+        e = np.array(self.input.e[self.input.date==self.input.date.unique()[-1]])
+        ustar = np.array(self.output.iloc[-1,:v.shape[0]])
+
+        # solution with old unemployment levels
+        self.param_sw['L'] = e+self.param['mfunc'](u,v,self.param['φ'],self.param['η'])
+        sol_u = root_robust(self.param_sw['objective'],self.param_sw,uguess_mean=0.2*np.ones(v.shape[0]**2+2*v.shape[0]-1),tol=tol,maxiter=maxiter,ntrue=ntrue,guessrange=guessrange)
+        
+        # solution with new unemployment levels 
+        self.param_sw['L'] = e+self.param['mfunc'](ustar,v,self.param['φ'],self.param['η'])
+        sol_ustar = root_robust(self.param_sw['objective'],self.param_sw,uguess_mean=np.ones(v.shape[0]**2+2*v.shape[0]-1),tol=tol,maxiter=maxiter,ntrue=ntrue,guessrange=guessrange)
+
         #self.Y     = 
         #self.Ystar = 
         return

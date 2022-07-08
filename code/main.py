@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from functions.optimal_unemployment import m_cd, mu_cd, Lstar, Lones, ustar_objective, mismatch_estimation
+from functions.optimal_unemployment import m_cd, mu_cd, Lstar, Lones, ustar_objective, mismatch_estimation, production_function, firm_FOC, household_FOC, market_clearing, full_solution_objective
 import pandas as pd
 
 # loading data
@@ -42,6 +42,9 @@ networks_yearly = mismatch_estimation(dfLabor_market_yearly,param_networks,guess
 networks_monthly = mismatch_estimation(dfLabor_market_monthly,param_networks,guessrange=0.01,ntrue=2,tol=1e-8)
 networks_monthly.mHP(10,'networks_monthly',600)
 networks_monthly.sector_level('networks_monthly',600)
+
+param_networks_sw = {'objective':full_solution_objective,'yfunc':production_function,'mkt_func':market_clearing,'hh_foc':household_FOC,'f_foc':firm_FOC}
+networks_monthly.social_welfare(param_networks_sw)
 
 ##### Decomposition and Robustness ##### 
 # Constant λα, different e across industries
@@ -137,6 +140,6 @@ ax.plot(αeq1_monthly.output.index,αeq1_monthly.output.mismatch_trend,'--r',lab
 ax.set_xlabel('Date')
 ax.set_ylabel('Mismatch Index')
 ax.legend()
-plt.savefig('code/output/mismatch_index_comparison_alpha_eq1.png')
+plt.savefig('code/output/mismatch_index_comparison_alphaeq1.png')
 
 print('done')
