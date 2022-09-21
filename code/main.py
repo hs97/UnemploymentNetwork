@@ -24,7 +24,7 @@ dfLabor_market_yearly  = dfLabor_market_yearly.dropna(axis=0)
 A = np.array(dfA.iloc[:, 1:], dtype='float64')
 φ = np.array(dfParam.φ)
 λ = np.array(dfParam.λ)
-α = np.array(dfParam.α)
+α = np.array(dfParam.α) #Chosen to ensure constant returns to scale. What if we pick them instead to allow for at most constant returns to scale and to equalize marginal product of labor at T=0 given actual labor at that time? What if instead we recalculate them each period to keep marginal product of labor constant across industries?
 θ = np.array(dfParam.θ)
 η = 0.5
 
@@ -44,9 +44,27 @@ networks_monthly = mismatch_estimation(dfLabor_market_monthly,param_networks, gu
 networks_monthly.mHP(10, 'networks_monthly', 600)
 networks_monthly.sector_level('networks_monthly', 600)
 
+#checking ustar-u_data to see which sectors are biggest issue
+df_sector_testing = pd.DataFrame(index=dfLabor_market_monthly.BEA_sector.unique())
+df_sector_testing['ustar_sahin'] = np.array(sahin_monthly.output.iloc[networks_monthly.output.mismatch_trend.argmin(),0:-3])
+df_sector_testing['u_data_sahin'] = np.array(sahin_monthly.input[sahin_monthly.input.date==sahin_monthly.output.index[networks_monthly.output.mismatch_trend.argmin()]].u)
+df_sector_testing['ustar_networks'] = np.array(networks_monthly.output.iloc[networks_monthly.output.mismatch_trend.argmin(),0:-3])
+df_sector_testing['u_data_networks'] = np.array(networks_monthly.input[networks_monthly.input.date==networks_monthly.output.index[networks_monthly.output.mismatch_trend.argmin()]].u)
+
+df_sector_testing['ugap_sahin'] = df_sector_testing.u_data_sahin-df_sector_testing.ustar_sahin
+df_sector_testing['ugap_networks'] = df_sector_testing.u_data_networks-df_sector_testing.ustar_networks
+
+df_sector_testing.to_csv('output/sector_testing.csv')
+networks_monthly.input.to_csv('output/inputs.csv')
+networks_monthly.output.to_csv('output/network_output.csv')
+sahin_monthly.output.to_csv('output/sahin_output.csv')
+
+
+
 '''
 param_networks_sw = {'objective':full_solution_objective,'yfunc':production_function,'mkt_func':market_clearing,'hh_foc':household_FOC,'f_foc':firm_FOC}
 networks_monthly.social_welfare(param_networks_sw)
+
 
 ##### Decomposition and Robustness ##### 
 # Constant λα, different e across industries

@@ -1,3 +1,59 @@
+# Production function and social welfare function, check that solution improves welfare
+def production_function(A,x,L,α):
+    Xin = np.prod(np.power(x,A),axis=1)
+    Lin = np.power(L,α)
+    y   = Lin*Xin #(Nsector,) array  
+    return y
+
+def firm_FOC(A,x,y,p):
+    # n^2 restrictions from firms FOC
+    P   = np.tile(p,(p.shape[0],1))
+    px  = P*x
+    py  = np.tile(p*y,(p.shape[0],1)).T
+    out = A - np.divide(px,py)
+    return out.reshape((p.shape[0]**2,))
+
+def household_FOC(θ,C,p):
+    #n-1 restrictions from household FOC
+    λ = np.divide(θ,p*C)
+    out = λ[1:] - λ[0]
+    return out
+
+def market_clearing(y,C,x):
+    # n restrictions from market clearing 
+    out = y - C - np.sum(x,axis=0)
+    return out
+
+def full_solution_objective(opt,param):
+    θ = param['θ']
+    if np.any(opt <= 0):
+        obj = np.ones((θ.shape[0]**2+2*θ.shape[0]-1,))*1e12
+    else:
+        α = param['α']
+        A = param['A']
+        L = param['L']
+        yfunc    = param['yfunc']
+        mkt_func = param['mkt_func']
+        hh_foc   = param['hh_foc']
+        f_foc    = param['f_foc']
+
+        n = L.shape[0]
+        x = opt[:n**2].reshape((n,n))
+        C = opt[n**2:n**2+n]
+        
+        p = np.zeros_like(L)
+        p[0]  = 1
+        p[1:] = opt[n**2+n:]
+
+        y = yfunc(A,x,L,α)
+
+        obj = np.zeros_like(opt)
+        obj[:n**2] = f_foc(A,x,y,p)
+        obj[n**2:n**2+n-1] = hh_foc(θ,C,p)
+        obj[n**2+n-1:] = mkt_func(y,C,x)
+    return obj
+
+
 def mismatch_estimation(df,objective,φ,η,λ,α,mfunc,mufunc,Lfunc,tol=1e-6,maxiter=1e5,ntrue=100,guessrange=0.1,HP_lam=129000):
     output = pd.DataFrame(index=df.date.unique(),columns=df.BEA_sector.unique())
     M_t    = np.zeros(df.date.unique().shape[0]) 
