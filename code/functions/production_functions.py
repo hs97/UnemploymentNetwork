@@ -3,7 +3,7 @@ import numpy as np
 import scipy.optimize as opt
 
 class cobb_douglas:
-    def __init__(self,params):
+    def __init__(self, params):
         self.alpha = params['alpha']
         self.a = params['a'] 
         self.A = params['A']
@@ -19,7 +19,7 @@ class cobb_douglas:
         L = input[0]
         x = input[1:]
         
-        y = self.A * np.power(L,self.alpha) * M_CD(x,self.a)
+        y = self.A * np.power(L, self.alpha) * M_CD(x,self.a)
 
         self.L, self.x, self.y = L, x, y
 
@@ -48,8 +48,8 @@ class CES:
 
         return y
 
-def M_CD(x,a):
-    return np.prod(np.power(x,a))
+def M_CD(x, a):
+    return np.prod(np.power(x, a))
 
 
 

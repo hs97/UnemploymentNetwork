@@ -32,20 +32,37 @@ if __name__ == "__main__":
     codes = codes[['code', '6-digit_code']].dropna()
     # pick out 6-digit codes and 5-digit codes(for local governments only)
     codes = codes.loc[(codes['6-digit_code'].str.len() == 6) | (codes['6-digit_code'].str.len() == 5)]
+
     # Merge together 2-digit code, 6-digit code, and names
     merge_map = pd.merge(merge_map, codes, on='code', how='left')
     # Read in input-output table
     IO_tab = pd.read_excel("data/raw/IO_table_07_12.xlsx", sheet_name='2007', skiprows=5).drop(columns='Commodity Description').rename(columns={'Code':'Input Sector(6-digit)'})
     IO_tab = pd.melt(IO_tab, id_vars='Input Sector(6-digit)', 
                      var_name='6-digit_code', value_name='Input Usage(6-digit)')
-    IO_tab[['Input Sector(6-digit)', '6-digit_code']] = IO_tab[['Input Sector(6-digit)', '6-digit_code']].astype(str)
+    IO_tab.loc[:, ['Input Sector(6-digit)', '6-digit_code']] = IO_tab[['Input Sector(6-digit)', '6-digit_code']].astype(str)
+    PC = IO_tab[(IO_tab['6-digit_code'] == 'T001') | (IO_tab['6-digit_code'] == 'T019')] # This corresponds to personal consumption expenditures
     IO_tab = pd.merge(merge_map[['code', '6-digit_code', 'BEA_sector']], IO_tab, on='6-digit_code', how='left')
+    PC = PC.pivot(index='Input Sector(6-digit)', columns='6-digit_code', values='Input Usage(6-digit)').reset_index()
+    PC = pd.merge(merge_map[['code', '6-digit_code', 'BEA_sector']].rename(columns={'6-digit_code':'Input Sector(6-digit)', 
+                                                                                     'code':'Input Sector(2-digit)'}), 
+                  PC, on='Input Sector(6-digit)', how='left')
+    # Compute total output of commodities that is not a part of intermediate use
+    PC.loc[:, 'Final User'] = PC['T019'] - PC['T001']
+    PC = PC.groupby(['Input Sector(2-digit)'])['Final User'].sum()/1000
+    PC = PC.reset_index()
+    PC = pd.merge(PC, merge_map[['code', 'BEA_sector']].rename(columns={'code':'Input Sector(2-digit)', 
+                                                                          'BEA_sector': 'Input Sector'}).drop_duplicates(),
+                   on='Input Sector(2-digit)', how='left')
+    PC = PC.groupby(['Input Sector'])['Final User'].sum().reset_index()
+
     # Add in labor usage
     merge_map = merge_map.append({'Sahin_sector':'labor', 'BEA_sector':'Labor',
                                   'code':'V0', '6-digit_code':'V00100'}, ignore_index=True)
+
     IO_tab = pd.merge(merge_map[['code', '6-digit_code']].rename(columns={'6-digit_code':'Input Sector(6-digit)', 
                                                                           'code':'Input Sector(2-digit)'}), 
                       IO_tab, on='Input Sector(6-digit)', how='left')
+    # Summing from 6-digit sectors to 2-digit sectors
     IO_tab = IO_tab.groupby(['code', 'Input Sector(2-digit)'])['Input Usage(6-digit)'].sum()/1000
     IO_tab = IO_tab.reset_index().rename(columns={'Input Usage(6-digit)': 'Input Usage'})
     # Read in sectoral output
@@ -83,11 +100,17 @@ if __name__ == "__main__":
     γ.sort_values('BEA_sector', inplace=True)
     # Compute preference parameters
     θ = np.matmul(np.identity(len(A.index)) - A.T, np.asarray(γ))
+    PC = PC.set_index('Input Sector')
+    θ_alt = PC['Final User']/PC['Final User'].sum()
     # Compute λ
     λ = np.matmul(θ.T, np.linalg.inv(np.identity(len(A.index)) - A))
+    λ_alt = np.matmul(θ_alt.T, np.linalg.inv(np.identity(len(A.index)) - A))
+
     params = γ
     params.loc[:, 'θ'] = θ
+    params.loc[:, 'θ_alt'] = θ_alt
     params.loc[:, 'λ'] = list(λ.iloc[0, :])
+    params.loc[:, 'λ_alt'] = λ_alt
     params.loc[:, 'α'] = list(Labor['share'])
     # Read in φ from Sahin et al estimates
     phi = pd.read_stata("data/raw/phi_breakpoint_v12_hires.dta").rename(columns={'ind':'Sahin_sector', 'phi':'φ'})
