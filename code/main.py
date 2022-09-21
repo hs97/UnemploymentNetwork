@@ -44,6 +44,23 @@ networks_monthly = mismatch_estimation(dfLabor_market_monthly,param_networks, gu
 networks_monthly.mHP(10, 'networks_monthly', 600)
 networks_monthly.sector_level('networks_monthly', 600)
 
+#checking ustar-u_data to see which sectors are biggest issue
+df_sector_testing = pd.DataFrame(index=dfLabor_market_monthly.BEA_sector.unique())
+df_sector_testing['ustar_sahin'] = np.array(sahin_monthly.output.iloc[networks_monthly.output.mismatch_trend.argmin(),0:-3])
+df_sector_testing['u_data_sahin'] = np.array(sahin_monthly.input[sahin_monthly.input.date==sahin_monthly.output.index[networks_monthly.output.mismatch_trend.argmin()]].u)
+df_sector_testing['ustar_networks'] = np.array(networks_monthly.output.iloc[networks_monthly.output.mismatch_trend.argmin(),0:-3])
+df_sector_testing['u_data_networks'] = np.array(networks_monthly.input[networks_monthly.input.date==networks_monthly.output.index[networks_monthly.output.mismatch_trend.argmin()]].u)
+
+df_sector_testing['ugap_sahin'] = df_sector_testing.u_data_sahin-df_sector_testing.ustar_sahin
+df_sector_testing['ugap_networks'] = df_sector_testing.u_data_networks-df_sector_testing.ustar_networks
+
+df_sector_testing.to_csv('output/sector_testing.csv')
+networks_monthly.input.to_csv('output/inputs.csv')
+networks_monthly.output.to_csv('output/network_output.csv')
+sahin_monthly.output.to_csv('output/sahin_output.csv')
+
+
+
 '''
 param_networks_sw = {'objective':full_solution_objective,'yfunc':production_function,'mkt_func':market_clearing,'hh_foc':household_FOC,'f_foc':firm_FOC}
 networks_monthly.social_welfare(param_networks_sw)
