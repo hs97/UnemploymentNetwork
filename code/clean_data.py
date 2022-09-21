@@ -117,6 +117,7 @@ if __name__ == "__main__":
     phi = pd.merge(merge_map[['Sahin_sector', 'BEA_sector']].drop_duplicates(), phi, on='Sahin_sector').drop(columns='Sahin_sector')
     params = params.join(phi.set_index('BEA_sector'))
     params.to_csv('data/clean/params.csv')
+    print(params[['λ', 'α', 'φ']].round(2).to_latex())
     employment = pd.read_csv('data/raw/EstabSurv_Employ_ind.csv')
     employment = pd.melt(employment, id_vars='year', var_name='Sahin_sector', value_name='e')
     employment['Sahin_sector'] = employment['Sahin_sector'].str[1:]
@@ -138,3 +139,6 @@ if __name__ == "__main__":
     U_yearly = JOLTs_yearly.groupby('year')['u'].sum().reset_index().rename(columns={'u': 'U_yearly'})
     JOLTs_yearly = pd.merge(JOLTs_yearly, U_yearly, on='year')
     JOLTs_yearly.to_csv('data/clean/labor_market_yearly.csv', index=False)
+
+    JOLTs_monthly = JOLTs_monthly[JOLTs_monthly['date'] == '2006-08-01']
+    print(JOLTs_monthly)
