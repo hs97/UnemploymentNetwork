@@ -24,7 +24,7 @@ dfLabor_market_yearly  = dfLabor_market_yearly.dropna(axis=0)
 A = np.array(dfA.iloc[:, 1:], dtype='float64')
 φ = np.array(dfParam.φ)
 λ = np.array(dfParam.λ)
-α = np.array(dfParam.α)
+α = np.array(dfParam.α) #Chosen to ensure constant returns to scale. What if we pick them instead to allow for at most constant returns to scale and to equalize marginal product of labor at T=0 given actual labor at that time? What if instead we recalculate them each period to keep marginal product of labor constant across industries?
 θ = np.array(dfParam.θ)
 η = 0.5
 
@@ -47,6 +47,7 @@ networks_monthly.sector_level('networks_monthly', 600)
 '''
 param_networks_sw = {'objective':full_solution_objective,'yfunc':production_function,'mkt_func':market_clearing,'hh_foc':household_FOC,'f_foc':firm_FOC}
 networks_monthly.social_welfare(param_networks_sw)
+
 
 ##### Decomposition and Robustness ##### 
 # Constant λα, different e across industries
