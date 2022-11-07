@@ -48,9 +48,11 @@ class cobb_douglas_network:
         self.dlogY = aggregate_real_output(self.dlogp,self.dlogelasticity_fN,self.dlogelasticity_Dc,self.elasticity_Dc,self.elasticity_fN,self.Psi)
 
         # Unemployment
-        self.dlogL = np.diag(self.curlyF) @ self.dlogtheta
-        self.dlogU = np.diag(np.power(U,-1)) @ (np.diag(H) @ self.dlogH - np.diag(L) @ self.dlogL)
+        self.dlogL = np.diag(self.curlyF.reshape(self.curlyF.shape[0],)) @ self.dlogtheta
+        self.dlogU = np.diag(np.power(U,-1).reshape(U.shape[0],)) @ (np.diag(H.reshape(H.shape[0],)) @ self.dlogH - np.diag(L.reshape(L.shape[0],)) @ self.dlogL)
+        return self
 
     def wage_elasticities(self,elasticity_wtheta, elasticity_wA):
         # Allows quick changes to wage elasticities
         self.elasticity_wtheta, self.elasticity_wA = elasticity_wtheta, elasticity_wA
+        return self
