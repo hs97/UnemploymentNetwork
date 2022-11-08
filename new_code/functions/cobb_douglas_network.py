@@ -1,4 +1,5 @@
 import numpy as np
+import copy
 from functions.helpers_price_quantities import pricing, wages, sectoral_output, aggregate_real_output
 from functions.helpers_labor_market import theta, elasticity_labor_demand
 
@@ -25,7 +26,9 @@ class cobb_douglas_network:
         self.dlogelasticity_Dc = np.zeros_like(elasticity_Dc) # Final production elasticities are fixed
 
         # Leontief inverse
-        self.Psi = np.linalg.inv(self.Omega)
+        self.Nsector = self.Omega.shape[0]
+        self.Psi = np.linalg.inv(np.eye(self.Nsector) - self.Omega)
+        
 
     def shocks(self,dlogA,dlogH,H,L,U):
         # Calculates response of prices, quantities, labor market to shocks to productivity (dlogA) or the size of the labor force (dlogH)
@@ -48,11 +51,22 @@ class cobb_douglas_network:
         self.dlogY = aggregate_real_output(self.dlogp,self.dlogelasticity_fN,self.dlogelasticity_Dc,self.elasticity_Dc,self.elasticity_fN,self.Psi)
 
         # Unemployment
-        self.dlogL = np.diag(self.curlyF.reshape(self.curlyF.shape[0],)) @ self.dlogtheta
+        self.dlogL = np.diag(self.curlyF.reshape(self.curlyF.shape[0],)) @ self.dlogtheta + self.dlogH
         self.dlogU = np.diag(np.power(U,-1).reshape(U.shape[0],)) @ (np.diag(H.reshape(H.shape[0],)) @ self.dlogH - np.diag(L.reshape(L.shape[0],)) @ self.dlogL)
-        return self
+        self.dUrate = (self.U + self.U * self.dlogU) / (self.H + self.H * self.dlogH) - self.U / self.H
+
+        # Aggregate unemployment
+        self.dlogLagg = self.L.T @ self.dlogL / np.sum(self.L)
+        self.dlogHagg = self.H.T @ self.dlogH / np.sum(self.H)
+        self.dlogUagg = self.U.T @ self.dlogU / np.sum(self.U)
+        self.dUrate_agg = (np.sum(self.U) + np.sum(self.U) * self.dlogUagg) / (np.sum(self.H) + np.sum(self.H) * self.dlogHagg) - np.sum(self.U) / np.sum(self.H)
+
+        return copy.deepcopy(self)
+
+        
+        
 
     def wage_elasticities(self,elasticity_wtheta, elasticity_wA):
         # Allows quick changes to wage elasticities
         self.elasticity_wtheta, self.elasticity_wA = elasticity_wtheta, elasticity_wA
-        return self
+        return copy.deepcopy(self)

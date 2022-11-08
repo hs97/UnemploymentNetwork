@@ -32,7 +32,7 @@ elasticity_Dc = elasticity_Dc/np.sum(elasticity_Dc)
 η = 0.5
 eta = np.ones_like(elasticity_fN) * η 
 s = 0.03 * np.ones_like(elasticity_fN) # exogenous separation rate (currently set to arbitrary value)
-r = 0.1 * np.ones_like(elasticity_fN) # recruiting cost in relative wage units (currently set to arbitrary value)
+r = 0.8 * np.ones_like(elasticity_fN) # recruiting cost in relative wage units (currently set to arbitrary value)
 
 #### Deriving required labor market measures #####
 Nsectors = Omega.shape[0]
@@ -46,7 +46,7 @@ curlyF = gen_curlyF_CD(theta,eta,phi,s)
 tau = gen_tau_CD(theta,eta,phi,s,r)
 
 #### Setting up production network ####
-# Rigid nominal wages
+## Rigid nominal wages ##
 elasticity_wtheta = np.zeros_like(Omega)
 elasticity_wA = np.zeros_like(Omega)
 cobb_douglas_rigid_nominal = cobb_douglas_network(Omega, elasticity_Dc, elasticity_fN, elasticity_Qtheta, tau, curlyF, elasticity_wtheta, elasticity_wA)
@@ -55,12 +55,68 @@ dlogA = np.zeros_like(elasticity_Dc)
 dlogH = np.zeros_like(elasticity_Dc)
 
 # Shock to technology
-dlogA = -0.01 * np.ones_like(dlogA)
-tech_shock = cobb_douglas_rigid_nominal.shocks(dlogA,dlogH,H,L,U) #doesn't seem to be working because negative shock to productivity has large negative effect on output in all sectors.
+dlogA = -0.01 * np.ones_like(dlogA) # shock to all sectors
+#dlogA[-2] = -0.05 # shock to transportation
+tech_shock_nominal = cobb_douglas_rigid_nominal.shocks(dlogA,dlogH,H,L,U) #doesn't seem to be working because negative shock to productivity has large negative effect on output in all sectors.
 
 # Shock to size of labor force
 dlogA = np.zeros_like(elasticity_Dc)
-dlogH = -0.05*np.ones_like(elasticity_Dc)
-H_shock = cobb_douglas_rigid_nominal.shocks(dlogA,dlogH,H,L,U)
+dlogH = -0.01*np.ones_like(elasticity_Dc)
+H_shock_nominal = cobb_douglas_rigid_nominal.shocks(dlogA,dlogH,H,L,U)
+
+## Wages move with aggregate price level ##
+I = np.eye(Omega.shape[0])
+term1 = I - np.ones_like(elasticity_Dc) @ elasticity_Dc.T @ cobb_douglas_rigid_nominal.Psi @ np.diag(elasticity_fN.flatten())
+Inv_term = np.linalg.inv(term1)
+elasticity_wA = Inv_term @ np.ones_like(elasticity_Dc) @ elasticity_Dc.T @ cobb_douglas_rigid_nominal.Psi 
+elasticity_wtheta = elasticity_wA @ np.diag(elasticity_fN.flatten()) @ np.diag(tau.flatten()) @ np.diag(elasticity_Qtheta.flatten())
+cobb_douglas_rigid_real = cobb_douglas_rigid_nominal.wage_elasticities(elasticity_wtheta, elasticity_wA)
+
+# Shock to technology
+dlogA = -0.01 * np.ones_like(dlogA) # shock to all sectors
+#dlogA[-2] = -0.05 # shock to transportation
+tech_shock_real = cobb_douglas_rigid_real.shocks(dlogA,dlogH,H,L,U) #doesn't seem to be working because negative shock to productivity has large negative effect on output in all sectors.
+
+# Shock to size of labor force
+dlogA = np.zeros_like(elasticity_Dc)
+dlogH = -0.01*np.ones_like(elasticity_Dc)
+H_shock_real = cobb_douglas_rigid_real.shocks(dlogA,dlogH,H,L,U)
+
+
+## Wages move with sectoral price level ##
+I = np.eye(Omega.shape[0])
+term1_sectoral = I - cobb_douglas_rigid_nominal.Psi @ np.diag(elasticity_fN.flatten())
+Inv_term = np.linalg.inv(term1_sectoral)
+elasticity_wA = Inv_term @ np.ones_like(elasticity_Dc) @ elasticity_Dc.T @ cobb_douglas_rigid_nominal.Psi 
+elasticity_wtheta = elasticity_wA @ np.diag(elasticity_fN.flatten()) @ np.diag(tau.flatten()) @ np.diag(elasticity_Qtheta.flatten())
+cobb_douglas_sectoral_real = cobb_douglas_rigid_nominal.wage_elasticities(elasticity_wtheta, elasticity_wA)
+
+# Shock to technology
+dlogA = -0.01 * np.ones_like(dlogA) # shock to all sectors
+#dlogA[-2] = -0.05 # shock to transportation
+tech_shock_sectoral = cobb_douglas_sectoral_real.shocks(dlogA,dlogH,H,L,U) #doesn't seem to be working because negative shock to productivity has large negative effect on output in all sectors.
+
+# Shock to size of labor force
+dlogA = np.zeros_like(elasticity_Dc)
+dlogH = -0.01*np.ones_like(elasticity_Dc)
+H_shock_sectoral = cobb_douglas_sectoral_real.shocks(dlogA,dlogH,H,L,U)
+
+## Wages rise one for one with own sector A, do no change with tightness ##
+elasticity_wA = np.eye(Omega.shape[0])
+elasticity_wtheta = np.zeros_like(Omega)
+cobb_douglas_eyeA = cobb_douglas_rigid_nominal.wage_elasticities(elasticity_wtheta, elasticity_wA)
+
+# Shock to technology
+dlogA = -0.01 * np.ones_like(dlogA) # shock to all sectors
+#dlogA[-2] = -0.05 # shock to transportation
+tech_shock_eyeA = cobb_douglas_eyeA.shocks(dlogA,dlogH,H,L,U) #doesn't seem to be working because negative shock to productivity has large negative effect on output in all sectors.
+
+# Shock to size of labor force
+dlogA = np.zeros_like(elasticity_Dc)
+dlogH = -0.01*np.ones_like(elasticity_Dc)
+H_shock_eyeA = cobb_douglas_eyeA.shocks(dlogA,dlogH,H,L,U)
+
+#### Figures ####
+
 
 print('done')

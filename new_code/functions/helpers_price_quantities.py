@@ -28,7 +28,7 @@ def aggregate_real_output(dlogp,dlogelasticity_fN,dlogelasticity_Dc,elasticity_D
     I = np.eye(Psi.shape[0])
     elasticity_fN=elasticity_fN.reshape(elasticity_fN.shape[0],)
     elasticity_fN_coeff = np.linalg.inv(I-np.diag(elasticity_fN) @ Psi) @ np.diag(elasticity_fN) 
-    dlogY = elasticity_Dc.T @ dlogp + elasticity_Dc.T @ (dlogelasticity_Dc + elasticity_fN_coeff @ dlogelasticity_fN)
+    dlogY = -elasticity_Dc.T @ dlogp + elasticity_Dc.T @ (dlogelasticity_Dc + elasticity_fN_coeff @ dlogelasticity_fN)
     return dlogY
 
 ##### Aggregate Prices #####
