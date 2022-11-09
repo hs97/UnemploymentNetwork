@@ -45,10 +45,11 @@ class cobb_douglas_network:
         self.dlogtheta = theta(self.dlogA, self.dlogH, self.curlyF, self.elasticity_Ldtheta, self.elasticity_LdA)
         self.dlogw = wages(self.dlogtheta,self.dlogA,self.elasticity_wtheta, self.elasticity_wA)
         self.dlogp = pricing(self.dlogw, self.dlogtheta, self.dlogA, self.elasticity_fN, self.elasticity_Qtheta, self.tau, self.Psi)
-        
+        self.dlog_relative_wages = self.dlogw-self.dlogp
+
         # Output
         self.dlogy = sectoral_output(self.dlogp,self.dloglambda,self.dlogelasticity_fN,self.elasticity_fN,self.Psi)
-        self.dlogY = aggregate_real_output(self.dlogp,self.dlogelasticity_fN,self.dlogelasticity_Dc,self.elasticity_Dc,self.elasticity_fN,self.Psi)
+        self.dlogY = aggregate_real_output(self.dlogp, self.dlogelasticity_fN, self.dlogelasticity_Dc, self.elasticity_Dc, self.elasticity_fN,self.Psi)
 
         # Unemployment
         self.dlogL = np.diag(self.curlyF.reshape(self.curlyF.shape[0],)) @ self.dlogtheta + self.dlogH
@@ -70,3 +71,10 @@ class cobb_douglas_network:
         # Allows quick changes to wage elasticities
         self.elasticity_wtheta, self.elasticity_wA = elasticity_wtheta, elasticity_wA
         return copy.deepcopy(self)
+
+
+def bar_plot(networks, sector_names, xlab, ylab, save_path, dpi=300):
+    
+
+
+    return

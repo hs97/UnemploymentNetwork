@@ -65,10 +65,11 @@ dlogH = -0.01*np.ones_like(elasticity_Dc)
 H_shock_nominal = cobb_douglas_rigid_nominal.shocks(dlogA,dlogH,H,L,U)
 
 ## Wages move with aggregate price level ##
+gamma = 2
 I = np.eye(Omega.shape[0])
-term1 = I - np.ones_like(elasticity_Dc) @ elasticity_Dc.T @ cobb_douglas_rigid_nominal.Psi @ np.diag(elasticity_fN.flatten())
+term1 = I - (gamma*np.ones_like(elasticity_Dc)) @ elasticity_Dc.T @ cobb_douglas_rigid_nominal.Psi @ np.diag(elasticity_fN.flatten())
 Inv_term = np.linalg.inv(term1)
-elasticity_wA = Inv_term @ np.ones_like(elasticity_Dc) @ elasticity_Dc.T @ cobb_douglas_rigid_nominal.Psi 
+elasticity_wA = Inv_term @ (gamma * np.ones_like(elasticity_Dc)) @ elasticity_Dc.T @ cobb_douglas_rigid_nominal.Psi 
 elasticity_wtheta = elasticity_wA @ np.diag(elasticity_fN.flatten()) @ np.diag(tau.flatten()) @ np.diag(elasticity_Qtheta.flatten())
 cobb_douglas_rigid_real = cobb_douglas_rigid_nominal.wage_elasticities(elasticity_wtheta, elasticity_wA)
 
@@ -85,9 +86,9 @@ H_shock_real = cobb_douglas_rigid_real.shocks(dlogA,dlogH,H,L,U)
 
 ## Wages move with sectoral price level ##
 I = np.eye(Omega.shape[0])
-term1_sectoral = I - cobb_douglas_rigid_nominal.Psi @ np.diag(elasticity_fN.flatten())
+term1_sectoral = I - (gamma*cobb_douglas_rigid_nominal.Psi) @ np.diag(elasticity_fN.flatten())
 Inv_term = np.linalg.inv(term1_sectoral)
-elasticity_wA = Inv_term @ np.ones_like(elasticity_Dc) @ elasticity_Dc.T @ cobb_douglas_rigid_nominal.Psi 
+elasticity_wA = Inv_term @ (gamma*cobb_douglas_rigid_nominal.Psi)
 elasticity_wtheta = elasticity_wA @ np.diag(elasticity_fN.flatten()) @ np.diag(tau.flatten()) @ np.diag(elasticity_Qtheta.flatten())
 cobb_douglas_sectoral_real = cobb_douglas_rigid_nominal.wage_elasticities(elasticity_wtheta, elasticity_wA)
 
