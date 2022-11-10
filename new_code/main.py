@@ -119,6 +119,7 @@ if __name__ == "__main__":
     tech_shock_eyeA = cobb_douglas_eyeA.shocks(dlogA_all, dlogH_null, H, L, U) 
     H_shock_eyeA = cobb_douglas_eyeA.shocks(dlogA_null, dlogH_all, H, L, U)
 
+    '''
     #### Figures ####
     plot_sector(tech_shock_real.dlogy, tech_shock_nominal.dlogy, var_name='dlogy', model_name='partially rigid wages', sectors=range(Nsectors)) #sectors)
     plot_sector(tech_shock_real.dUrate, tech_shock_nominal.dUrate, var_name='change in u', model_name='partially rigid wages', sectors=range(Nsectors)) #sectors)
@@ -128,6 +129,7 @@ if __name__ == "__main__":
     plot_sector(tech_shock_real_sec.dlogy, tech_shock_nominal_sec.dlogy, var_name='dlogy', model_name='partially rigid wages', sectors=range(Nsectors)) #sectors)
     plot_sector(tech_shock_real_sec.dUrate, tech_shock_nominal_sec.dUrate, var_name='change in u', model_name='partially rigid wages', sectors=range(Nsectors)) #sectors)
     plot_sector(tech_shock_real_sec.dlogtheta, tech_shock_nominal_sec.dlogtheta, var_name=r'd$\log\theta$', model_name='partially rigid wages', sectors=range(Nsectors)) #sectors)
+    '''
 
 
     #Impact tech shocks, agg included
@@ -153,7 +155,7 @@ if __name__ == "__main__":
     networks = [tech_shock_nominal_sec, tech_shock_sectoral_sec]
     varname = 'dlogy'
     aggname = 'dlogY'
-    title   = 'Response to 1% productivity shock durables' 
+    title   = 'Response to 1% productivity shock in durables' 
     xlab    = ''
     ylab    = 'Log change in real output'
     labels  = ['Constant wage', 'Partial adjustment']
@@ -190,7 +192,7 @@ if __name__ == "__main__":
     networks = [H_shock_nominal_sec, H_shock_sectoral_sec]
     varname = 'dlogy'
     aggname = 'dlogY'
-    title   = 'Response to 1% labor force shock in all sectors' 
+    title   = 'Response to 1% labor force shock in durables' 
     xlab    = ''
     ylab    = 'Log change in real output'
     labels  = ['Constant wage', 'Partial adjustment']
