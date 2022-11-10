@@ -2,12 +2,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import root
 from functions.helpers_labor_market import gen_curlyF_CD, gen_elasticity_Qtheta_CD, gen_tau_CD
-from functions.cobb_douglas_network import cobb_douglas_network
+from functions.cobb_douglas_network import cobb_douglas_network, bar_plot
 import pandas as pd
 
 ##### loading data #####
 data_dir = 'data/clean/'
 dfA      = pd.read_csv(data_dir + 'A.csv')
+dfNames  = pd.read_csv(data_dir + 'sector_names.csv')
 dfParam  = pd.read_csv(data_dir + 'params.csv')
 dfLshare = pd.read_csv(data_dir + 'labor_share.csv')
 dfLabor_market_monthly = pd.read_csv(data_dir + 'labor_market_monthly.csv')
@@ -105,5 +106,17 @@ dlogH = -0.01*np.ones_like(elasticity_Dc)
 H_shock_eyeA = cobb_douglas_eyeA.shocks(dlogA,dlogH,H,L,U)
 
 #### Figures ####
+#response to tech shock
+networks = [tech_shock_nominal,tech_shock_sectoral]
+sector_names = list(dfNames.BEA_sector_short) + list(['Agg.'])
+varname = 'dlogy'
+aggname = 'dlogY'
+title = 'Response to 1% productivity shock in all sectors'
+xlab = ''
+ylab = 'Log change in real output'
+labels = ['Case 1', 'Case 2']
+save_path = 'output/fixed_sectoral_output.png'
+
+bar_plot(networks, sector_names, varname, aggname, title, xlab, ylab, labels, save_path, rotation=30, fontsize=15, barWidth = 0.25, dpi=300)
 
 print('done')

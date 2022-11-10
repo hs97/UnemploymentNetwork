@@ -76,33 +76,36 @@ class cobb_douglas_network:
         return copy.deepcopy(self)
 
 
-def bar_plot(networks, sector_names, varname, aggname, xlab, ylab, labels, save_path, fontsize=15, barWidth = 0.25, dpi=300):
+def bar_plot(networks, sector_names, varname, aggname, title, xlab, ylab, labels, save_path, rotation=30, fontsize=15, barWidth = 0.25, dpi=300):
     fig = plt.subplots(dpi=dpi)
 
     #creating arrays
     br = np.zeros((len(sector_names),len(networks)))
-    yvals = np.zeros((len(sector_names)+1,len(networks)))
+    yvals = np.zeros((len(sector_names),len(networks)))
     nsector = networks[0].output_dict[varname].shape[0]
 
     #initializing
-    br[0,:] = np.arange(len(sector_names))
-    yvals[0,:nsector] = networks[0].output_dict[varname]
+    br[:,0] = np.arange(len(sector_names))
+    yvals[:nsector,0] = networks[0].output_dict[varname].flatten()
     if len(sector_names)>nsector:
-        yvals[0,-1] = networks[0].output_dict[aggname]
-    plt.bar(br[0,:], yvals[0,:], width = barWidth,
+        yvals[-1,0] = networks[0].output_dict[aggname].flatten()
+    plt.bar(br[:,0], yvals[:,0], width = barWidth,
         edgecolor ='grey', label =labels[0])
     
     #looping through other networks
     for i in range(1,len(networks)):
-        br[i,:] = [x + barWidth for x in br[i-1,:]]
-        yvals[i,:nsector] = networks[i].output_dict[varname]
+        br[:,i] = [x + barWidth for x in br[:,i-1]]
+        yvals[:nsector,i] = networks[i].output_dict[varname].flatten()
         if len(sector_names)>nsector:
-            yvals[i,-1] = networks[i].output_dict[aggname]
-        plt.bar(br[i,:], yvals[i,:], width = barWidth,
+            yvals[-1,i] = networks[i].output_dict[aggname].flatten()
+        plt.bar(br[:,i], yvals[:,i], width = barWidth,
             edgecolor ='grey', label =labels[i])
-    
+
+    plt.title(title, fontweight ='bold', fontsize = fontsize)
     plt.xlabel(xlab, fontweight ='bold', fontsize = fontsize)
     plt.ylabel(ylab, fontweight ='bold', fontsize = fontsize)
     plt.xticks([r + barWidth for r in range(len(sector_names))],
-        sector_names)
-    plt.savefig(save_path,dpi=dpi)    
+        sector_names, rotation = rotation)
+    plt.legend()
+
+    plt.savefig(save_path, dpi=dpi, transparent=True)    
