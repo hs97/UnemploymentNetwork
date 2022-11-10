@@ -76,22 +76,33 @@ class cobb_douglas_network:
         return copy.deepcopy(self)
 
 
-def bar_plot(networks, sector_names, xlab, ylab, labels, save_path, barWidth = 0.25, dpi=300):
+def bar_plot(networks, sector_names, varname, aggname, xlab, ylab, labels, save_path, fontsize=15, barWidth = 0.25, dpi=300):
     fig = plt.subplots(dpi=dpi)
 
     #creating arrays
     br = np.zeros((len(sector_names),len(networks)))
     yvals = np.zeros((len(sector_names)+1,len(networks)))
+    nsector = networks[0].output_dict[varname].shape[0]
 
     #initializing
     br[0,:] = np.arange(len(sector_names))
-    
-    plt.bar(br[0,:], networks[0], width = barWidth,
+    yvals[0,:nsector] = networks[0].output_dict[varname]
+    if len(sector_names)>nsector:
+        yvals[0,-1] = networks[0].output_dict[aggname]
+    plt.bar(br[0,:], yvals[0,:], width = barWidth,
         edgecolor ='grey', label =labels[0])
     
     #looping through other networks
     for i in range(1,len(networks)):
         br[i,:] = [x + barWidth for x in br[i-1,:]]
-        
-
-    return
+        yvals[i,:nsector] = networks[i].output_dict[varname]
+        if len(sector_names)>nsector:
+            yvals[i,-1] = networks[i].output_dict[aggname]
+        plt.bar(br[i,:], yvals[i,:], width = barWidth,
+            edgecolor ='grey', label =labels[i])
+    
+    plt.xlabel(xlab, fontweight ='bold', fontsize = fontsize)
+    plt.ylabel(ylab, fontweight ='bold', fontsize = fontsize)
+    plt.xticks([r + barWidth for r in range(len(sector_names))],
+        sector_names)
+    plt.savefig(save_path,dpi=dpi)    
