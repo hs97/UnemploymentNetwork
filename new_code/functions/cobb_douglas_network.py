@@ -2,6 +2,7 @@ import numpy as np
 import copy
 from functions.helpers_price_quantities import pricing, wages, sectoral_output, aggregate_real_output
 from functions.helpers_labor_market import theta, elasticity_labor_demand
+import matplotlib.pyplot as plt
 
 class cobb_douglas_network:
     def __init__(self, Omega, elasticity_Dc, elasticity_fN, elasticity_Qtheta, tau, curlyF, elasticity_wtheta, elasticity_wA):
@@ -62,6 +63,8 @@ class cobb_douglas_network:
         self.dlogUagg = self.U.T @ self.dlogU / np.sum(self.U)
         self.dUrate_agg = (np.sum(self.U) + np.sum(self.U) * self.dlogUagg) / (np.sum(self.H) + np.sum(self.H) * self.dlogHagg) - np.sum(self.U) / np.sum(self.H)
 
+        self.output_dict = {'dlogA':self.dlogA, 'dlogH':self.dlogH, 'dlogtheta':self.dlogtheta, 'dlogw':self.dlogw, 'dlogp':self.dlogp, 'dlog_relative_wages':self.dlog_relative_wages, 'dlogy':self.dlogy, 'dlogY':self.dlogY, 'dlogL':self.dlogL, 'dlogU':self.dlogU, 'dUrate':self.dUrate, 'dlogLagg':self.dlogLagg, 'dlogHagg':self.dlogHagg, 'dlogUagg':self.dlogUagg, 'dUrate_agg':self.dUrate_agg}
+
         return copy.deepcopy(self)
 
         
@@ -73,8 +76,22 @@ class cobb_douglas_network:
         return copy.deepcopy(self)
 
 
-def bar_plot(networks, sector_names, xlab, ylab, save_path, dpi=300):
-    
+def bar_plot(networks, sector_names, xlab, ylab, labels, save_path, barWidth = 0.25, dpi=300):
+    fig = plt.subplots(dpi=dpi)
 
+    #creating arrays
+    br = np.zeros((len(sector_names),len(networks)))
+    yvals = np.zeros((len(sector_names)+1,len(networks)))
+
+    #initializing
+    br[0,:] = np.arange(len(sector_names))
+    
+    plt.bar(br[0,:], networks[0], width = barWidth,
+        edgecolor ='grey', label =labels[0])
+    
+    #looping through other networks
+    for i in range(1,len(networks)):
+        br[i,:] = [x + barWidth for x in br[i-1,:]]
+        
 
     return
