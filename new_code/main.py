@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import root
 from functions.helpers_labor_market import gen_curlyF_CD, gen_elasticity_Qtheta_CD, gen_tau_CD
-from functions.cobb_douglas_network import cobb_douglas_network
+from functions.cobb_douglas_network import cobb_douglas_network, bar_plot
 import pandas as pd
 
 def plot_sector(model, benchmark, var_name, model_name, sectors):
@@ -19,6 +19,7 @@ if __name__ == "__main__":
     ##### loading data #####
     data_dir = 'data/clean/'
     dfA      = pd.read_csv(data_dir + 'A.csv')
+    dfNames  = pd.read_csv(data_dir + 'sector_names.csv')
     dfParam  = pd.read_csv(data_dir + 'params.csv')
     dfLshare = pd.read_csv(data_dir + 'labor_share.csv')
     dfLabor_market_monthly = pd.read_csv(data_dir + 'labor_market_monthly.csv')
@@ -36,13 +37,13 @@ if __name__ == "__main__":
     Omega = np.array(dfA.iloc[:, 1:], dtype='float64')
     phi = np.array(dfParam.φ).reshape(Omega.shape[0],1)
     λ = np.array(dfParam.λ).reshape(Omega.shape[0],1)
-    elasticity_fN = np.array(dfParam.α).reshape(Omega.shape[0], 1) #Chosen to ensure constant returns to scale. What if we pick them instead to allow for at most constant returns to scale and to equalize marginal product of labor at T=0 given actual labor at that time? What if instead we recalculate them each period to keep marginal product of labor constant across industries?
+    elasticity_fN = np.array(dfParam.α).reshape(Omega.shape[0], 1)
     elasticity_Dc = np.array(dfParam.θ_alt).reshape(Omega.shape[0], 1)
     elasticity_Dc = elasticity_Dc /np.sum(elasticity_Dc)
     η = 0.5
     eta = np.ones_like(elasticity_fN) * η 
     s = 0.03 * np.ones_like(elasticity_fN) # exogenous separation rate (currently set to arbitrary value)
-    r = 0.8 * np.ones_like(elasticity_fN) # recruiting cost in relative wage units (currently set to arbitrary value)
+    r = 0.1 * np.ones_like(elasticity_fN) # recruiting cost in relative wage units (currently set to arbitrary value)
 
     #### Deriving required labor market measures #####
     Nsectors = Omega.shape[0]
@@ -64,7 +65,7 @@ if __name__ == "__main__":
     # shock hyperparameters
     shock_mag = 0.01
     shock_sign = 1
-    shock_sec = 0 # which sector to shock
+    shock_sec = 3 # which sector to shock
 
     # absent shocks
     dlogA_null = np.zeros_like(elasticity_Dc)
@@ -84,6 +85,7 @@ if __name__ == "__main__":
     tech_shock_nominal = cobb_douglas_rigid_nominal.shocks(dlogA_all, dlogH_null, H, L, U)
     tech_shock_nominal_sec = cobb_douglas_rigid_nominal.shocks(dlogA_sec, dlogH_null, H, L, U)
     H_shock_nominal = cobb_douglas_rigid_nominal.shocks(dlogA_null, dlogH_all, H, L, U)
+    H_shock_nominal_sec = cobb_douglas_rigid_nominal.shocks(dlogA_null, dlogH_sec, H, L, U)
 
     ## Wages move with aggregate price level ##
     gamma = 0.25
@@ -106,7 +108,9 @@ if __name__ == "__main__":
     cobb_douglas_sectoral_real = cobb_douglas_rigid_nominal.wage_elasticities(elasticity_wtheta, elasticity_wA)
     tech_shock_sectoral = cobb_douglas_sectoral_real.shocks(dlogA_all, dlogH_null, H,L,U) 
     tech_shock_sectoral_sec = cobb_douglas_sectoral_real.shocks(dlogA_sec, dlogH_null, H, L, U) 
-    H_shock_sectoral = cobb_douglas_sectoral_real.shocks(dlogA_null, dlogH_sec, H, L, U)
+    H_shock_sectoral = cobb_douglas_sectoral_real.shocks(dlogA_null, dlogH_all, H, L, U)
+    H_shock_sectoral_sec = cobb_douglas_sectoral_real.shocks(dlogA_null, dlogH_sec, H, L, U)
+
 
     ## Wages rise one for one with own sector A, do no change with tightness ##
     elasticity_wA = np.eye(Omega.shape[0])
@@ -124,3 +128,80 @@ if __name__ == "__main__":
     plot_sector(tech_shock_real_sec.dlogy, tech_shock_nominal_sec.dlogy, var_name='dlogy', model_name='partially rigid wages', sectors=range(Nsectors)) #sectors)
     plot_sector(tech_shock_real_sec.dUrate, tech_shock_nominal_sec.dUrate, var_name='change in u', model_name='partially rigid wages', sectors=range(Nsectors)) #sectors)
     plot_sector(tech_shock_real_sec.dlogtheta, tech_shock_nominal_sec.dlogtheta, var_name=r'd$\log\theta$', model_name='partially rigid wages', sectors=range(Nsectors)) #sectors)
+
+
+    #Impact tech shocks, agg included
+    networks = [tech_shock_nominal, tech_shock_sectoral]
+    sector_names = list(dfNames.BEA_sector_short) + list(['Agg.'])
+    varname = 'dlogy'
+    aggname = 'dlogY'
+    title   = 'Response to 1% productivity shock in all sectors' 
+    xlab    = ''
+    ylab    = 'Log change in real output'
+    labels  = ['Constant wage', 'Partial adjustment']
+    save_path = 'output/tech_shock_fixed_sectoral_output_all.png'
+    bar_plot(networks, sector_names, varname, aggname, title, xlab, ylab, labels, save_path, rotation=30, fontsize=15, barWidth = 0.25, dpi=300)
+
+    #unemployment rate changes
+    varname = 'dUrate'
+    aggname = 'dUrate_agg'
+    ylab    = ''
+    save_path = 'output/tech_shock_fixed_sectoral_Urate_all.png'
+    bar_plot(networks, sector_names, varname, aggname, title, xlab, ylab, labels, save_path, rotation=30, fontsize=15, barWidth = 0.25, dpi=300)
+
+    #Sectoral shocks
+    networks = [tech_shock_nominal_sec, tech_shock_sectoral_sec]
+    varname = 'dlogy'
+    aggname = 'dlogY'
+    title   = 'Response to 1% productivity shock durables' 
+    xlab    = ''
+    ylab    = 'Log change in real output'
+    labels  = ['Constant wage', 'Partial adjustment']
+    save_path = 'output/tech_shock_fixed_sectoral_output_durables.png'
+    bar_plot(networks, sector_names, varname, aggname, title, xlab, ylab, labels, save_path, rotation=30, fontsize=15, barWidth = 0.25, dpi=300)
+    
+    #unemployment rate changes
+    varname = 'dUrate'
+    aggname = 'dUrate_agg'
+    ylab    = ''
+    save_path = 'output/tech_shock_fixed_sectoral_Urate_durables.png'
+    bar_plot(networks, sector_names, varname, aggname, title, xlab, ylab, labels, save_path, rotation=30, fontsize=15, barWidth = 0.25, dpi=300)
+
+    #impact of H shock
+    networks = [H_shock_nominal, H_shock_sectoral]
+    sector_names = list(dfNames.BEA_sector_short) + list(['Agg.'])
+    varname = 'dlogy'
+    aggname = 'dlogY'
+    title   = 'Response to 1% labor force shock in all sectors' 
+    xlab    = ''
+    ylab    = 'Log change in real output'
+    labels  = ['Constant wage', 'Partial adjustment']
+    save_path = 'output/H_shock_fixed_sectoral_output_all.png'
+    bar_plot(networks, sector_names, varname, aggname, title, xlab, ylab, labels, save_path, rotation=30, fontsize=15, barWidth = 0.25, dpi=300)
+
+    #unemployment rate changes
+    varname = 'dUrate'
+    aggname = 'dUrate_agg'
+    ylab    = ''
+    save_path = 'output/H_shock_fixed_sectoral_Urate_all.png'
+    bar_plot(networks, sector_names, varname, aggname, title, xlab, ylab, labels, save_path, rotation=30, fontsize=15, barWidth = 0.25, dpi=300)
+    
+    #Sectoral shocks
+    networks = [H_shock_nominal_sec, H_shock_sectoral_sec]
+    varname = 'dlogy'
+    aggname = 'dlogY'
+    title   = 'Response to 1% labor force shock in all sectors' 
+    xlab    = ''
+    ylab    = 'Log change in real output'
+    labels  = ['Constant wage', 'Partial adjustment']
+    save_path = 'output/H_shock_fixed_sectoral_output_durables.png'
+    bar_plot(networks, sector_names, varname, aggname, title, xlab, ylab, labels, save_path, rotation=30, fontsize=15, barWidth = 0.25, dpi=300)
+    
+    #unemployment rate changes
+    varname = 'dUrate'
+    aggname = 'dUrate_agg'
+    ylab    = ''
+    save_path = 'output/H_shock_fixed_sectoral_Urate_durables.png'
+    bar_plot(networks, sector_names, varname, aggname, title, xlab, ylab, labels, save_path, rotation=30, fontsize=15, barWidth = 0.25, dpi=300)
+
+    print('done')
