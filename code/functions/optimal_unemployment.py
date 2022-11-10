@@ -301,3 +301,15 @@ def HL(dim,λ):
     d2 = np.ones((dim-2,))*λ
     H = np.diag(d2,-2) + np.diag(d1,-1) + np.diag(d0,0) + np.diag(d1,1) + np.diag(d2,2) 
     return H
+
+
+# Functions for picking α  
+def alpha_obj(alpha_init, L, y, A):
+    alpha = np.zeros_like(L)
+    alpha[0] = alpha_init
+    benchmark = (alpha_init / L[0]) * y[0] 
+    alpha[1:] = benchmark * (L[1:] / y[1:])
+
+    obj = abs(np.max(alpha+np.sum(A,axis=1)) - 1)
+
+    return obj

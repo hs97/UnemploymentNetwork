@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from functions.optimal_unemployment import m_cd, mu_cd, Lstar, Lones, ustar_objective, mismatch_estimation, production_function, firm_FOC, household_FOC, market_clearing, full_solution_objective
+from scipy.optimize import root
+from functions.optimal_unemployment import m_cd, mu_cd, Lstar, Lones, ustar_objective, mismatch_estimation, production_function, firm_FOC, household_FOC, market_clearing, full_solution_objective, alpha_obj
 import pandas as pd
 
 # loading data
@@ -27,6 +28,9 @@ A = np.array(dfA.iloc[:, 1:], dtype='float64')
 α = np.array(dfParam.α) #Chosen to ensure constant returns to scale. What if we pick them instead to allow for at most constant returns to scale and to equalize marginal product of labor at T=0 given actual labor at that time? What if instead we recalculate them each period to keep marginal product of labor constant across industries?
 θ = np.array(dfParam.θ)
 η = 0.5
+
+# Alternative alphas
+alpha_pick = root(alpha_obj,0.5,args=(L,y,A),method='hybr',tol=1e-10)
 
 param_sahin = {'A': A, 'φ': φ, 'λ': np.ones_like(λ), 'α': np.ones_like(α), 'θ': θ, 'η': η, 'mfunc': m_cd,
                'mufunc': mu_cd, 'Lfunc': Lones, 'objective': ustar_objective}
