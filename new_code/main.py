@@ -2,10 +2,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import root
 from functions.helpers_labor_market import gen_curlyF_CD, gen_elasticity_Qtheta_CD, gen_tau_CD
-from functions.cobb_douglas_network import cobb_douglas_network, bar_plot
+from functions.cobb_douglas_network import cobb_douglas_network
 import pandas as pd
 
-<<<<<<< HEAD
 def plot_sector(model, benchmark, var_name, model_name, sectors):
     print(model)
     df = pd.concat([pd.DataFrame(model, index=sectors), pd.DataFrame(benchmark, index=sectors)], axis=1)
@@ -15,19 +14,6 @@ def plot_sector(model, benchmark, var_name, model_name, sectors):
     plt.xlabel("sector")
     plt.show()
     return 
-=======
-##### loading data #####
-data_dir = 'data/clean/'
-dfA      = pd.read_csv(data_dir + 'A.csv')
-dfNames  = pd.read_csv(data_dir + 'sector_names.csv')
-dfParam  = pd.read_csv(data_dir + 'params.csv')
-dfLshare = pd.read_csv(data_dir + 'labor_share.csv')
-dfLabor_market_monthly = pd.read_csv(data_dir + 'labor_market_monthly.csv')
-dfLabor_market_yearly  = pd.read_csv(data_dir + 'labor_market_yearly.csv')
-dfLabor_market_yearly.year  = pd.to_datetime(dfLabor_market_yearly.year, format='%Y')
-dfLabor_market_monthly.date = pd.to_datetime(dfLabor_market_monthly.date)
-dfLabor_market_yearly = dfLabor_market_yearly.rename(columns={'year':'date'})
->>>>>>> 492a68f90c865bc5cc0333bc3b993652fd79e0c8
 
 if __name__ == "__main__":
     ##### loading data #####
@@ -96,6 +82,7 @@ if __name__ == "__main__":
 
     # Shocks to economies with rigid wages
     tech_shock_nominal = cobb_douglas_rigid_nominal.shocks(dlogA_all, dlogH_null, H, L, U)
+    tech_shock_nominal_sec = cobb_douglas_rigid_nominal.shocks(dlogA_sec, dlogH_null, H, L, U)
     H_shock_nominal = cobb_douglas_rigid_nominal.shocks(dlogA_null, dlogH_all, H, L, U)
 
     ## Wages move with aggregate price level ##
@@ -128,31 +115,12 @@ if __name__ == "__main__":
     tech_shock_eyeA = cobb_douglas_eyeA.shocks(dlogA_all, dlogH_null, H, L, U) 
     H_shock_eyeA = cobb_douglas_eyeA.shocks(dlogA_null, dlogH_all, H, L, U)
 
-<<<<<<< HEAD
     #### Figures ####
     plot_sector(tech_shock_real.dlogy, tech_shock_nominal.dlogy, var_name='dlogy', model_name='partially rigid wages', sectors=range(Nsectors)) #sectors)
     plot_sector(tech_shock_real.dUrate, tech_shock_nominal.dUrate, var_name='change in u', model_name='partially rigid wages', sectors=range(Nsectors)) #sectors)
     plot_sector(tech_shock_real.dlogtheta, tech_shock_nominal.dlogtheta, var_name=r'd$\log\theta$', model_name='partially rigid wages', sectors=range(Nsectors)) #sectors)
-    print('done')
-=======
-# Shock to size of labor force
-dlogA = np.zeros_like(elasticity_Dc)
-dlogH = -0.01*np.ones_like(elasticity_Dc)
-H_shock_eyeA = cobb_douglas_eyeA.shocks(dlogA,dlogH,H,L,U)
 
-#### Figures ####
-#response to tech shock
-networks = [tech_shock_nominal,tech_shock_sectoral]
-sector_names = list(dfNames.BEA_sector_short) + list(['Agg.'])
-varname = 'dlogy'
-aggname = 'dlogY'
-title = 'Response to 1% productivity shock in all sectors'
-xlab = ''
-ylab = 'Log change in real output'
-labels = ['Case 1', 'Case 2']
-save_path = 'output/fixed_sectoral_output.png'
-
-bar_plot(networks, sector_names, varname, aggname, title, xlab, ylab, labels, save_path, rotation=30, fontsize=15, barWidth = 0.25, dpi=300)
-
-print('done')
->>>>>>> 492a68f90c865bc5cc0333bc3b993652fd79e0c8
+    # Impact of sector level shocks
+    plot_sector(tech_shock_real_sec.dlogy, tech_shock_nominal_sec.dlogy, var_name='dlogy', model_name='partially rigid wages', sectors=range(Nsectors)) #sectors)
+    plot_sector(tech_shock_real_sec.dUrate, tech_shock_nominal_sec.dUrate, var_name='change in u', model_name='partially rigid wages', sectors=range(Nsectors)) #sectors)
+    plot_sector(tech_shock_real_sec.dlogtheta, tech_shock_nominal_sec.dlogtheta, var_name=r'd$\log\theta$', model_name='partially rigid wages', sectors=range(Nsectors)) #sectors)
