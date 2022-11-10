@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.optimize import root 
 
 ##### Tightness #####
 def theta(dlogA, dlogH, curlyF, elasticity_Ldtheta, elasticity_LdA):
@@ -26,3 +27,13 @@ def gen_elasticity_Qtheta_CD(theta, eta):
 
 def gen_tau_CD(theta,eta,phi,s,r):
     return r * s / (phi * np.power(theta,-eta) - r * s)
+
+def r_calib(theta,eta,phi,s,L,targ,tol=1e-8):
+    r_opt = root(r_obj, 0.1, args=(theta,eta,phi,s,L,targ), method='hybr', tol=tol)
+    return r_opt.x[0]
+
+def r_obj(r,theta,eta,phi,s,L,targ):
+    r = r * np.ones_like(theta)
+    tau = gen_tau_CD(theta,eta,phi,s,r)
+    obj = tau.T @ L / np.sum(L) - targ
+    return obj[0]
