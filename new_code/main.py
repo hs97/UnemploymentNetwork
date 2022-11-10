@@ -55,7 +55,7 @@ if __name__ == "__main__":
     elasticity_Qtheta = gen_elasticity_Qtheta_CD(theta,eta)
     curlyF = gen_curlyF_CD(theta,eta,phi,s)
     
-    r = r_calib(theta,eta,phi,s,L,0.032)
+    r = r_calib(theta,eta,phi,s,L,0.015) #Target percent of labor force employed in recruiting
     tau = gen_tau_CD(theta,eta,phi,s,r*np.ones_like(theta))
 
     #### Setting up production network ####
