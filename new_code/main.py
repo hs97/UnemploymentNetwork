@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import root
-from functions.helpers_labor_market import gen_curlyF_CD, gen_elasticity_Qtheta_CD, gen_tau_CD
+from functions.helpers_labor_market import gen_curlyF_CD, gen_elasticity_Qtheta_CD, gen_tau_CD, r_calib
 from functions.cobb_douglas_network import cobb_douglas_network, bar_plot
 import pandas as pd
 
@@ -54,7 +54,9 @@ if __name__ == "__main__":
 
     elasticity_Qtheta = gen_elasticity_Qtheta_CD(theta,eta)
     curlyF = gen_curlyF_CD(theta,eta,phi,s)
-    tau = gen_tau_CD(theta,eta,phi,s,r)
+    
+    r = r_calib(theta,eta,phi,s,L,0.032)
+    tau = gen_tau_CD(theta,eta,phi,s,r*np.ones_like(theta))
 
     #### Setting up production network ####
     ## Rigid nominal wages ##
@@ -205,5 +207,5 @@ if __name__ == "__main__":
     ylab    = ''
     save_path = 'output/H_shock_fixed_sectoral_Urate_durables.png'
     bar_plot(networks, sector_names, varname, aggname, title, xlab, ylab, labels, save_path, rotation=30, fontsize=15, barWidth = 0.25, dpi=300)
-    
+
     print('done')
