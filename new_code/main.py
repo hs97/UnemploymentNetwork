@@ -196,7 +196,7 @@ if __name__ == "__main__":
     aggname = 'dlogY'
     title   = 'Response to 1% labor force shock in durables' 
     xlab    = ''
-    ylab    = 'Log change in real output'
+    ylab    = ''
     labels  = ['Constant wage', 'Partial adjustment']
     save_path = 'output/H_shock_fixed_sectoral_output_durables.png'
     bar_plot(networks, sector_names, varname, aggname, title, xlab, ylab, labels, save_path, rotation=30, fontsize=15, barWidth = 0.25, dpi=300)
