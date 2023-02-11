@@ -120,6 +120,8 @@ if __name__ == "__main__":
     cobb_douglas_eyeA = cobb_douglas_rigid_nominal.wage_elasticities(elasticity_wtheta, elasticity_wA)
     tech_shock_eyeA = cobb_douglas_eyeA.shocks(dlogA_all, dlogH_null, H, L, U) 
     H_shock_eyeA = cobb_douglas_eyeA.shocks(dlogA_null, dlogH_all, H, L, U)
+    tech_shock_eyeA_sec = cobb_douglas_eyeA.shocks(dlogA_sec, dlogH_null, H, L, U)
+    H_shock_eyeA_sec = cobb_douglas_eyeA.shocks(dlogA_null, dlogH_sec, H, L, U)  
 
     '''
     #### Figures ####
@@ -135,14 +137,14 @@ if __name__ == "__main__":
 
 
     #Impact tech shocks, agg included
-    networks = [tech_shock_nominal, tech_shock_sectoral]
+    networks = [tech_shock_nominal, tech_shock_sectoral,tech_shock_eyeA]
     sector_names = list(dfNames.BEA_sector_short) + list(['Agg.'])
     varname = 'dlogy'
     aggname = 'dlogY'
     title   = 'Response to 1% productivity shock in all sectors' 
     xlab    = ''
     ylab    = 'Log change in real output'
-    labels  = ['Constant wage', 'Partial adjustment']
+    labels  = ['Constant wage', 'Partial adjustment to price', r'Adjustment to d$\log A$']
     save_path = 'output/tech_shock_fixed_sectoral_output_all.png'
     bar_plot(networks, sector_names, varname, aggname, title, xlab, ylab, labels, save_path, rotation=30, fontsize=15, barWidth = 0.25, dpi=300)
 
@@ -154,13 +156,13 @@ if __name__ == "__main__":
     bar_plot(networks, sector_names, varname, aggname, title, xlab, ylab, labels, save_path, rotation=30, fontsize=15, barWidth = 0.25, dpi=300)
 
     #Sectoral shocks
-    networks = [tech_shock_nominal_sec, tech_shock_sectoral_sec]
+    networks = [tech_shock_nominal_sec, tech_shock_sectoral_sec, tech_shock_eyeA_sec]
     varname = 'dlogy'
     aggname = 'dlogY'
     title   = 'Response to 1% productivity shock in durables' 
     xlab    = ''
     ylab    = 'Log change in real output'
-    labels  = ['Constant wage', 'Partial adjustment']
+    labels  = ['Constant wage', 'Partial adjustment', r'Adjustment to d$\log A$']
     save_path = 'output/tech_shock_fixed_sectoral_output_durables.png'
     bar_plot(networks, sector_names, varname, aggname, title, xlab, ylab, labels, save_path, rotation=30, fontsize=15, barWidth = 0.25, dpi=300)
     
