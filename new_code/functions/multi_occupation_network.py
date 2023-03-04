@@ -128,6 +128,7 @@ def LaborDemand(dlog_wR, dlog_y, dlog_p, dlog_epsN, curlyL):
     # dlog_p     - Jx1 log price changes
     # dlog_epsN  - JxO labor elasticity of production changes
     # curlyL     - OxJ occupation-sector employment shares
+
     O = dlog_wR.shape[0]
     dlog_Ld = curlyL @ dlog_y + np.diag(curlyL @ dlog_epsN).reshape((O,1)) - dlog_wR
     return dlog_Ld
@@ -141,3 +142,32 @@ def AggOutputFunc(dlog_y, dlog_lam, dlog_epsD, epsD):
 
     dlog_aggY = epsD.T @ (dlog_epsD + dlog_y - dlog_lam)
     return dlog_aggY
+
+def WageElasticityFunc(gamma, Psi, epsN, curlyF, curlyQ, curlyT, curlyL, num = 0):
+    # gamma      - adjust how strongly nominal wages respond to reweighted prices
+    # Psi        - JxJ Leontief inverse
+    # epsN       - JxO labor elasticity of production
+    # curlyF     - OxO elasticty of job finding wrt to theta
+    # curlyQ     - OxO elasticity of vacancy filling wrt to theta
+    # curlyT     - OxO recruiter producer ratio
+    # curlyL     - OxJ occupation-sector employment shares
+    # num        - indicates which price is numeraire
+
+    Xi_theta = curlyL @ Psi @ epsN @ (curlyF + curlyQ @ curlyT)
+    Xi_p = Psi @ epsN @ curlyQ @ curlyT @ np.linalg.inv(curlyF - Xi_theta) 
+    Xi_w = np.eye(Psi.shape[0]) - gamma * Psi @ epsN @ curlyL - (gamma - 1) * Xi_p @ curlyL
+    # Coefficient matrices in price equation
+    Ca = - (np.eye(Psi.shape[0]) - Xi_p @ curlyL) @ Psi
+    Ch = - Xi_p @ (curlyL @ Psi @ epsN - np.eye(curlyQ.shape[0]))
+    Cw = Xi_w
+    Cw[num, :] = 0
+    Cw[num, num] = 1
+    Ch[num, :] = 0
+    Ca[num, :] = 0
+    inv_Cw = np.linalg.inv(Cw)
+    Ca = inv_Cw @ Ca 
+    Ch = inv_Cw @ Ch
+
+    epsW_A = (1 - gamma) * curlyL @ Ca
+    epsW_H = (1 - gamma) * curlyL @ Ch
+    return epsW_A, epsW_H
