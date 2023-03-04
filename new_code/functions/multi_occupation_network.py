@@ -21,10 +21,10 @@ def curlyEFunc(dlog_epsN,epsN):
     return curlyE
 
 # Tightness changes
-def ThetaFunc(dlog_A, dlog_H, dlog_w, dlog_epsN, dlog_lam, Psi, Omega, curlyF, curlyQ, curlyT, curlyE, curlyL, epsN, num=0):
+def ThetaFunc(dlog_A, dlog_H, dlog_wR, dlog_epsN, dlog_lam, Psi, Omega, curlyF, curlyQ, curlyT, curlyE, curlyL, epsN):
     # dlog_A     - Jx1 tech shocks
     # dlog_H     - Ox1 labor force shocks
-    # dlog_w     - Ox1 log wage changes
+    # dlog_wR    - Ox1 log adjusted wage changes
     # dlog_epsN  - JxO labor elasticity of production changes
     # dlog_lam   - Jx1 Domar weight changes
     # Psi        - JxJ Leontief inverse
@@ -36,46 +36,53 @@ def ThetaFunc(dlog_A, dlog_H, dlog_w, dlog_epsN, dlog_lam, Psi, Omega, curlyF, c
     # curlyL     - OxJ occupation-sector employment shares
     # epsN       - JxO labor elasticity of production
     # dlog_theta - Ox1 log changes in tightness
-    J = dlog_A.shape[0]
     O = dlog_H.shape[0]
     
     # Creating matrices
-    curlyL_j = np.zeros_like(curlyL)
-    curlyL_j[:,num] = curlyL[:,num]
-    Xi = curlyL @ Psi @ epsN @ curlyF + curlyL_j @ Psi @ epsN @ curlyQ @ curlyT 
+    Xi = curlyL @ Psi @ epsN @ (curlyF + curlyQ @ curlyT)
     inv_mat = np.linalg.inv(curlyF - Xi)
     I = np.eye(O)
     
     # Contribution of different components
-    Cw = inv_mat @ ((curlyL-curlyL_j) @ Psi @ epsN - np.diag(np.sum(curlyL,1)))
-    Ca = inv_mat @ curlyL_j @ Psi
+    Cw = -inv_mat 
+    Ca = inv_mat @ curlyL @ Psi
     Ch = inv_mat @ (curlyL @ Psi @ epsN - I)
     Ce = -inv_mat @ curlyL @ Psi
     Cλ = inv_mat @ curlyL @ Psi @ (np.diag(np.sum(Omega,1)) - Omega)
 
     # Change in tightness
-    dlog_theta = Cw @ dlog_w + Ch @ dlog_H + inv_mat @ np.diag(curlyL @ dlog_epsN).reshape((O,1)) + Cλ @ dlog_lam + Ce @ curlyE + Ca @ dlog_A
+    dlog_theta = Cw @ dlog_wR + Ch @ dlog_H + inv_mat @ np.diag(curlyL @ dlog_epsN).reshape((O,1)) + Cλ @ dlog_lam + Ce @ curlyE + Ca @ dlog_A
     
     return dlog_theta
 
 # Price changes
-def PriceFunc(dlog_A, dlog_w, dlog_theta, Psi, curlyQ, epsN, curlyT):
+def PriceFunc(dlog_A, dlog_wR, dlog_theta, Psi, curlyQ, epsN, curlyT, curlyL, num=0):
     # dlog_A     - Jx1 tech shocks
-    # dlog_w     - Ox1 log wage changes
+    # dlog_wR    - Ox1 log adjusted wage changes
     # dlog_theta - Ox1 log tightness changes
     # Psi        - JxJ Leontief inverse
     # curlyQ     - OxO elasticity of vacancy filling wrt to theta
     # epsN       - JxO labor elasticity of production
     # curlyT     - OxO recruiter producer ratio
     # dlog_p     - Jx1 log price changes
+    # num        - indicates which price is numeraire
 
     # Contributions of different components
     Cw = Psi @ epsN
     Ctheta = -Cw @ curlyQ @ curlyT
     Ca = -Psi
+    # Imposing numeraire
+    Cw[num, :] = 0
+    Ctheta[num, :] = 0
+    Ca[num, :] = 0
+    # Inverse matrix
+    Xi = np.eye(Psi.shape[0]) - Psi @ epsN @ curlyL
+    Xi[num, :] = 0
+    Xi[num, num] = 1
+    inv_mat = np.linalg.inv(Xi)
 
     # Price changes
-    dlog_p = Cw @ dlog_w + Ctheta @ dlog_theta + Ca @ dlog_A
+    dlog_p = inv_mat @ (Cw @ dlog_wR + Ctheta @ dlog_theta + Ca @ dlog_A)
     return dlog_p
 
 # Output changes
@@ -115,15 +122,14 @@ def LaborSupply(dlog_H,dlog_theta,curlyF):
     return dlog_Ls
 
 # Labor demand    
-def LaborDemand(dlog_w, dlog_y, dlog_p, dlog_epsN, curlyL):
-    # dlog_w     - Ox1 log wage changes
+def LaborDemand(dlog_wR, dlog_y, dlog_p, dlog_epsN, curlyL):
+    # dlog_wr    - Ox1 log adjusted wage changes
     # dlog_y     - Jx1 log output changes
     # dlog_p     - Jx1 log price changes
     # dlog_epsN  - JxO labor elasticity of production changes
     # curlyL     - OxJ occupation-sector employment shares
-
-    O = dlog_w.shape[0]
-    dlog_Ld = curlyL @ (dlog_p + dlog_y) + np.diag(curlyL @ dlog_epsN).reshape((O,1)) - dlog_w
+    O = dlog_wR.shape[0]
+    dlog_Ld = curlyL @ dlog_y + np.diag(curlyL @ dlog_epsN).reshape((O,1)) - dlog_wR
     return dlog_Ld
 
 # Aggregate output
