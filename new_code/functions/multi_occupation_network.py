@@ -153,3 +153,9 @@ def WageElasticityFunc(gamma_A, gamma_H, Psi, curlyL, epsN):
     epsW_A = gamma_A * curlyL @ Psi
     epsW_H = gamma_H * (curlyL @ Psi @ epsN - np.eye(curlyL.shape[0]))
     return epsW_A, epsW_H
+
+def UnemploymentFunc(dlog_L, dlog_H):
+    # dlog_L     - Ox1 change in labor (demand or supply)
+    # dlog_H     - Ox1 labor force shocks
+    dlog_U = dlog_H - dlog_L
+    return dlog_U
