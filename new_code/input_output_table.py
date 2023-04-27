@@ -45,6 +45,7 @@ if __name__ == "__main__":
     IO_tab = pd.melt(IO_tab, id_vars='Input Sector(3-digit)', 
                      var_name='3-digit_code', value_name='Input Usage(3-digit)')
     IO_tab.loc[:, ['Input Sector(3-digit)', '3-digit_code']] = IO_tab[['Input Sector(3-digit)', '3-digit_code']].astype(str)
+    #WOULD BE MORE ROBUST TO COLLAPSE TO 2 DIGIT LEVEL AT THIS POINT.
     PC = IO_tab[(IO_tab['3-digit_code'] == 'T001') | (IO_tab['3-digit_code'] == 'T019')] # This corresponds to personal consumption expenditures
     IO_tab = pd.merge(merge_map[['code', '3-digit_code', 'BEA_sector']], IO_tab, on='3-digit_code', how='left')
     PC = PC.pivot(index='Input Sector(3-digit)', columns='3-digit_code', values='Input Usage(3-digit)').reset_index()
