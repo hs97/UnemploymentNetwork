@@ -90,5 +90,16 @@ if __name__ == "__main__":
     
     A = pd.DataFrame(data = np.array(np.array(M) @ np.array(U)).T, index=M.index, columns=M.index)
     adjustment = np.sum(np.array(A),axis=1) + np.array(labor_tab.labor_elasticity) #minor adjusments to ensure sum to 1, these should be small
+    A = A.divide(adjustment, axis=0)
+    labor_tab.labor_elasticity = labor_tab.labor_elasticity.divide(adjustment)
+    
+    #writing to csv
+    A.to_csv('data/clean/A.csv')
+    labor_tab.to_csv('data/clean/labor_tab.csv')
+    demand_tab.to_csv('data/clean/demand_tab.csv')
 
+
+    
+
+    
 
