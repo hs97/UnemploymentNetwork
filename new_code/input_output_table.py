@@ -50,12 +50,12 @@ if __name__ == "__main__":
 
     # Labor elasticities 
     labor_tab = pd.DataFrame({'3-digit_code':Use_tab['3-digit_code'][:71], 'total_output':np.array(Use_tab.iloc[79,1:72]),
-                               'total_intermediate':np.array(Use_tab.iloc[73,1:72])})
+                               'total_intermediate':np.array(Use_tab.iloc[73,1:72]),'employee_compensation':np.array(Use_tab.iloc[74,1:72])})
     labor_tab = labor_tab.merge(merge_map[['3-digit_code','short_names']],how='left',on='3-digit_code')
-    labor_tab = labor_tab[['total_output','total_intermediate','short_names']].groupby('short_names').sum()
-    labor_tab['labor_income'] = labor_tab['total_output']-labor_tab['total_intermediate']
-    labor_tab['labor_elasticity'] = labor_tab['labor_income']/labor_tab['total_output']
-
+    labor_tab = labor_tab[['total_output','total_intermediate','employee_compensation','short_names']].groupby('short_names').sum()
+    labor_tab['labor_income1'] = labor_tab['total_output']-labor_tab['total_intermediate'] 
+    labor_tab['labor_elasticity1'] = labor_tab['labor_income1']/labor_tab['total_output' ]#assuming all non-intermediates go to labor
+    labor_tab['labor_elasticity2'] = labor_tab['employee_compensation']/labor_tab['total_output' ]
 
     # Intermediate input elasticities
     U = pd.DataFrame(data = np.array(Use_tab.iloc[:71,1:72]),
@@ -89,12 +89,20 @@ if __name__ == "__main__":
     M = M.divide(output_tab.total_industry_output,axis=0)
     
     A = pd.DataFrame(data = np.array(np.array(M) @ np.array(U)).T, index=M.index, columns=M.index)
-    adjustment = np.sum(np.array(A),axis=1) + np.array(labor_tab.labor_elasticity) #minor adjusments to ensure sum to 1, these should be small
-    A = A.divide(adjustment, axis=0)
-    labor_tab.labor_elasticity = labor_tab.labor_elasticity.divide(adjustment)
+    
+    # Using version 1
+    adjustment = np.sum(np.array(A),axis=1) + np.array(labor_tab.labor_elasticity1) #minor adjusments to ensure sum to 1, these should be small
+    A1 = A.divide(adjustment, axis=0)
+    labor_tab.labor_elasticity1 = labor_tab.labor_elasticity1.divide(adjustment)
+    
+    # Using version 2
+    adjustment = np.sum(np.array(A),axis=1) + np.array(labor_tab.labor_elasticity2) #minor adjusments to ensure sum to 1, these should be small
+    A2 = A.divide(adjustment, axis=0)
+    labor_tab.labor_elasticity2 = labor_tab.labor_elasticity2.divide(adjustment)
     
     #writing to csv
-    A.to_csv('data/clean/A.csv')
+    A1.to_csv('data/clean/A1.csv')
+    A2.to_csv('data/clean/A2.csv')
     labor_tab.to_csv('data/clean/labor_tab.csv')
     demand_tab.to_csv('data/clean/demand_tab.csv')
 
