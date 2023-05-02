@@ -7,9 +7,28 @@ def WageFunc(dlog_A, dlog_H, epsW_A, epsW_H):
     # dlog_H - Ox1 labor force shocks
     # epsW_A - OxJ elasticity of wages to A
     # epsW_H - OxO elasticity of wages to H
-    # dlog_w - Ox1 log wage changes
-    dlog_w = epsW_A @ dlog_A + epsW_H @ dlog_H
-    return dlog_w
+    # dlog_wR - Ox1 log adjusted wage changes
+    dlog_wR = epsW_A @ dlog_A + epsW_H @ dlog_H
+
+    return dlog_wR
+
+def NomRigWageFunc(dlog_A, dlog_H, Psi, epsN, curlyQ, curlyF, curlyT, curlyL, num):
+    # dlog_A - Jx1 tech shocks
+    # dlog_H - Ox1 labor force shocks
+    # dlog_theta - Ox1 log tightness changes
+    # Psi        - JxJ Leontief inverse
+    # curlyQ     - OxO elasticity of vacancy filling wrt to theta
+    # epsN       - JxO labor elasticity of production
+    # curlyT     - OxO recruiter producer ratio
+    # curlyL     - OxJ occupation-sector employment shares
+    # dlog_p     - Jx1 log price changes
+    # dlog_wR - Ox1 log adjusted wage changes   
+    # num        - indicates which price is numeraire
+
+    dlog_p = NomRigPriceFunc(dlog_A, dlog_H, Psi, epsN, curlyQ, curlyF, curlyT, curlyL, num)
+    dlog_wR = -1 * curlyL @ dlog_p
+    
+    return dlog_wR
 
 # Creating curlyE 
 def curlyEFunc(dlog_epsN,epsN):
@@ -64,6 +83,7 @@ def PriceFunc(dlog_A, dlog_wR, dlog_theta, Psi, curlyQ, epsN, curlyT, curlyL, nu
     # curlyQ     - OxO elasticity of vacancy filling wrt to theta
     # epsN       - JxO labor elasticity of production
     # curlyT     - OxO recruiter producer ratio
+    # curlyL     - OxJ occupation-sector employment shares
     # dlog_p     - Jx1 log price changes
     # num        - indicates which price is numeraire
 
@@ -83,6 +103,38 @@ def PriceFunc(dlog_A, dlog_wR, dlog_theta, Psi, curlyQ, epsN, curlyT, curlyL, nu
 
     # Price changes
     dlog_p = inv_mat @ (Cw @ dlog_wR + Ctheta @ dlog_theta + Ca @ dlog_A)
+    return dlog_p
+
+# Price changes with ful nominal wage rigidity
+def NomRigPriceFunc(dlog_A, dlog_H, Psi, epsN, curlyQ, curlyF, curlyT, curlyL, num):
+    # dlog_A     - Jx1 tech shocks
+    # dlog_H     - Ox1 labor force shocks
+    # Psi        - JxJ Leontief inverse
+    # epsN       - JxO labor elasticity of production
+    # curlyQ     - OxO elasticity of vacancy filling wrt to theta
+    # curlyF     - OxO elasticty of job finding wrt to theta
+    # curlyT     - OxO recruiter producer ratio
+    # curlyL     - OxJ occupation-sector employment shares
+    # dlog_p     - Jx1 log price changes
+    # num        - indicates which price is numeraire    
+
+    # constant that appear frequently.
+    X = np.linalg.inv(Psi @ epsN @ curlyQ @ curlyT)
+
+    # Coefficient matrices
+    Ch = np.eye(Psi.shape[0])- curlyL @ Psi @ epsN
+    Ca = - Ch @ X @ Psi
+    Cp = Ch @ curlyF @ X
+
+    # Imposing numeraire
+    Ch[num, :] = 0
+    Ca[num, :] = 0
+    Cp[num, :] = 0
+    Cp[num, num] = 1
+
+    # Price changes
+    dlog_p = np.linalg.inv(Cp) @ (Ch @ dlog_H - Ca @ dlog_A)
+
     return dlog_p
 
 # Output changes
