@@ -122,9 +122,9 @@ def NomRigPriceFunc(dlog_A, dlog_H, Psi, epsN, curlyQ, curlyF, curlyT, curlyL, n
     X = np.linalg.inv(Psi @ epsN @ curlyQ @ curlyT)
 
     # Coefficient matrices
-    Ch = np.eye(Psi.shape[0])- curlyL @ Psi @ epsN
-    Ca = - Ch @ X @ Psi
+    Ch = np.eye(epsN.shape[1])- curlyL @ Psi @ epsN
     Cp = Ch @ curlyF @ X
+    Ca = - Cp @ Psi
 
     # Imposing numeraire
     Ch[num, :] = 0
@@ -133,7 +133,7 @@ def NomRigPriceFunc(dlog_A, dlog_H, Psi, epsN, curlyQ, curlyF, curlyT, curlyL, n
     Cp[num, num] = 1
 
     # Price changes
-    dlog_p = np.linalg.inv(Cp) @ (Ch @ dlog_H - Ca @ dlog_A)
+    dlog_p = np.linalg.inv(Cp) @ (Ch @ dlog_H + Ca @ dlog_A)
 
     return dlog_p
 
