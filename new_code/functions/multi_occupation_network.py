@@ -206,6 +206,22 @@ def WageElasticityFunc(gamma_A, gamma_H, Psi, curlyL, epsN):
     epsW_H = gamma_H * (curlyL @ Psi @ epsN - np.eye(curlyL.shape[0]))
     return epsW_A, epsW_H
 
+def WageElasticityFuncMP(gamma, Psi, epsN, curlyF, curlyQ, curlyT, curlyL):
+    # gamma_A    - adjust responsiveness to technology
+    # gamma_H    - adjust responsiveness to labor force
+    # Psi        - JxJ Leontief inverse
+    # curlyL     - OxJ occupation-sector employment shares
+    # epsN       - JxO labor elasticity of production
+
+    XiMP = gamma/(1-gamma) * curlyQ @ curlyT + curlyL @ Psi @ epsN @ (curlyF + curlyQ @ curlyT)
+    invTerm = np.linalg.inv(curlyF - XiMP)
+    commonTerm = -gamma/(1-gamma) * curlyQ @ curlyT @ invTerm
+
+    epsW_A = commonTerm @ curlyL @ Psi
+    epsW_H = commonTerm @ (curlyL @ Psi @ epsN - np.eye(curlyL.shape[0]))
+    return epsW_A, epsW_H
+
+
 def UnemploymentFunc(dlog_L, dlog_H):
     # dlog_L     - Ox1 change in labor (demand or supply)
     # dlog_H     - Ox1 labor force shocks
