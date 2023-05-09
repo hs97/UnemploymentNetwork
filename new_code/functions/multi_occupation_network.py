@@ -215,7 +215,7 @@ def OutputFunc(dlog_A, dlog_H, dlog_K, dlog_theta, dlog_lam, Psi, Omega, curlyQ,
     return dlog_y
 
 # Labor supply
-def LaborSupply(dlog_H,dlog_theta,curlyF):
+def LaborSupply(dlog_H, dlog_theta, curlyF):
     # dlog_H : Ox1 labor force shocks
     # dlog_theta - Ox1 log tightness changes
     # curlyF : OxO elasticty of job finding wrt to theta
@@ -224,15 +224,14 @@ def LaborSupply(dlog_H,dlog_theta,curlyF):
     return dlog_Ls
 
 # Labor demand    
-def LaborDemand(dlog_wR, dlog_y, dlog_p, dlog_epsN, curlyL):
+def LaborDemand(dlog_wR, dlog_y, dlog_epsN, curlyL):
     # dlog_wr: Ox1 log adjusted wage changes
     # dlog_y : Jx1 log output changes
-    # dlog_p : Jx1 log price changes
     # dlog_epsN: JxO labor elasticity of production changes
     # curlyL : OxJ occupation-sector employment shares
 
     O = dlog_wR.shape[0]
-    dlog_Ld = curlyL@dlog_y + np.diag(curlyL@dlog_epsN).reshape((O,1)) - dlog_wR
+    dlog_Ld = curlyL @ dlog_y + np.diag(curlyL @ dlog_epsN).reshape((O,1)) - dlog_wR
     return dlog_Ld
 
 # Aggregate output
@@ -247,7 +246,8 @@ def AggOutputFunc(dlog_y, dlog_lam, dlog_epsD, epsD):
 
 def WageElasticityFunc(gamma_A, gamma_H, gamma_K, Psi, curlyL, epsN, epsK):
     """
-    This function computes the wage elasticities based on gamma's
+    This function computes the wage elasticities based on 
+    gamma deviations from Hulten's theorem
     Args: 
         gamma_A: adjust responsiveness to technology
         gamma_H: adjust responsiveness to labor force
@@ -260,26 +260,38 @@ def WageElasticityFunc(gamma_A, gamma_H, gamma_K, Psi, curlyL, epsN, epsK):
         epsW_H: OxO elasticity of wages to H
         epsW_K: OxK elasticity of wages to K
     """
-    epsW_A = gamma_A * curlyL@Psi
-    epsW_H = gamma_H * (curlyL@Psi@epsN - np.eye(curlyL.shape[0]))
-    # TODO: update once aggregation formula is complete
-    epsW_K = np.zeros((epsW_A.shape[0], epsK.shape[1]))
+    epsW_A = gamma_A * curlyL @ Psi
+    epsW_H = gamma_H * (curlyL @ Psi @ epsN - np.eye(curlyL.shape[0]))
+    epsW_K = gamma_K * curlyL @ Psi @ epsK
     return epsW_A, epsW_H, epsW_K
 
-def WageElasticityFuncMP(gamma, Psi, epsN, curlyF, curlyQ, curlyT, curlyL):
-    # gamma_A: adjust responsiveness to technology
-    # gamma_H: adjust responsiveness to labor force
-    # Psi    : JxJ Leontief inverse
-    # curlyL : OxJ occupation-sector employment shares
-    # epsN   : JxO labor elasticity of production
+def WageElasticityFuncMP(gamma, Psi, epsN, epsK, curlyF, curlyQ, curlyT, curlyL):
+    """
+    This function computes the wage elasticities based on gamma 
+    deviations from changes in the marginal product of labor
+    Args: 
+        gamma: adjust responsiveness to marginal product of labor
+        Psi: JxJ Leontief inverse
+        curlyL: OxJ occupation-sector employment shares
+        epsN: JxO labor elasticity of production
+        epsK: JxK fixed factor elasticity of production
+        curlyQ: OxO elasticity of job filling rate to tightness
+        curlyT: OxO recruiter producer ratio
+    Returns:
+        epsW_A: OxJ elasticity of wages to A
+        epsW_H: OxO elasticity of wages to H
+        epsW_K: OxK elasticity of wages to K
+    """
 
     XiMP = gamma/(1-gamma) * curlyQ@curlyT + curlyL@Psi@epsN@(curlyF + curlyQ@curlyT)
     invTerm = np.linalg.inv(curlyF - XiMP)
     commonTerm = -gamma/(1-gamma) * curlyQ@curlyT@invTerm
 
-    epsW_A = commonTerm@curlyL@Psi
-    epsW_H = commonTerm@(curlyL@Psi@epsN - np.eye(curlyL.shape[0]))
-    return epsW_A, epsW_H
+    epsW_A = commonTerm @ curlyL @ Psi
+    epsW_H = commonTerm @ (curlyL @ Psi @ epsN - np.eye(curlyL.shape[0]))
+    epsW_K = commonTerm @ curlyL @ Psi @ epsK
+
+    return epsW_A, epsW_H, epsW_K
 
 
 def UnemploymentFunc(dlog_L, dlog_H):
