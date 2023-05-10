@@ -39,7 +39,7 @@ def OutputFunc(dlog_A, dlog_H, dlog_K, Psi, curlyQ, curlyF, curlyT, curlyL, epsN
     dlog_y = Xi_y@(cA @ dlog_A + cH @ dlog_H + cK @ dlog_K)
     return dlog_y
 
-def ThetaFunc(dlog_H, dlog_y, Psi, epsN, epsK, curlyL, curlyQ, curlyT, curlyF, num=0):
+def ThetaFunc(dlog_H, dlog_y, Psi, epsN, curlyL, curlyQ, curlyT, curlyF, num=0):
     """ This function computes changes in sectoral output
         dlog_H: Jx1 tech shocks
         dlog_y : Jx1 log output changes
@@ -59,7 +59,7 @@ def ThetaFunc(dlog_H, dlog_y, Psi, epsN, epsK, curlyL, curlyQ, curlyT, curlyF, n
     inv_mat = np.linalg.inv(curlyF - Xi_theta)
     Xi_nom = np.eye(dlog_H.shape[0]) + inv_mat@curlyL@Psi@epsN@curlyQ@curlyT
     Xi_nom = np.linalg.inv(Xi_nom) @ inv_mat
-    num_mat = np.ones_like(epsK.T)
+    num_mat = np.ones_like(epsN.T)
     num_mat[:,num] = 1
 
     #coefficients
