@@ -74,7 +74,7 @@ def ThetaFunc(dlog_A, dlog_H, dlog_K, dlog_wR, dlog_epsN, dlog_lam, Psi, Omega, 
     Cλ = inv_mat@curlyL@Psi@(np.diag(np.sum(Omega,1)) - Omega)
 
     # Change in tightness
-    dlog_theta = Cw@dlog_wR + Ch@dlog_H + inv_mat@np.diag(curlyL@dlog_epsN).reshape((O,1)) + Cλ@dlog_lam + Ce@curlyE + Ca@dlog_A + Ck@dlog_K
+    dlog_theta = Cw@dlog_wR + Ch@dlog_H + Ck@dlog_K + inv_mat@np.diag(curlyL@dlog_epsN).reshape((O,1)) + Cλ@dlog_lam + Ce@curlyE + Ca@dlog_A
     return dlog_theta
 
 # Price changes
