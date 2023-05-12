@@ -235,7 +235,7 @@ def WageElasticityFuncMP(gamma, Psi, epsN, epsK, curlyF, curlyQ, curlyT, curlyL)
 
     XiMP = gamma/(1-gamma) * curlyQ@curlyT + curlyL@Psi@epsN@(curlyF + curlyQ@curlyT)
     invTerm = np.linalg.inv(curlyF - XiMP)
-    commonTerm = -gamma/(1-gamma) * curlyQ@curlyT@invTerm
+    commonTerm = -1 * gamma/(1-gamma) * curlyQ@curlyT@invTerm
 
     epsW_A = commonTerm @ curlyL @ Psi
     epsW_H = commonTerm @ (curlyL @ Psi @ epsN - np.eye(curlyL.shape[0]))
