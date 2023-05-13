@@ -249,3 +249,14 @@ def UnemploymentFunc(dlog_L, dlog_H):
     # dlog_H : Ox1 labor force shocks
     dlog_U = dlog_H - dlog_L
     return dlog_U
+
+def AggUnemploymentFunc(dlog_U,U):
+    dlog_Uagg = U.T @ dlog_U / np.sum(U)
+    return dlog_Uagg
+
+def AggThetaFunc(dlog_theta, dlog_U, U, V):
+    dlog_V = dlog_theta + dlog_U 
+    dlog_Uagg  = U.T @ dlog_U / np.sum(U)
+    dlog_Vagg  = V.T @ dlog_V / np.sum(V)
+    dlog_thetaAgg = dlog_Vagg - dlog_Uagg
+    return dlog_thetaAgg
