@@ -26,5 +26,6 @@ def bar_plot(data, sector_names, title, xlab, ylab, labels, save_path, rotation=
     plt.xticks([r + barWidth for r in range(len(sector_names))],
         sector_names, rotation = rotation, fontsize = 6)
     plt.legend()
+    plt.tight_layout()
 
     plt.savefig(save_path, dpi=dpi, transparent=True)  
