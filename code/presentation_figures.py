@@ -23,7 +23,6 @@ dfMatching_params = pd.read_csv(data_dir + 'matching_param_estimates_occu.csv')
 shares = pd.read_csv(data_dir + 'energy_capital_shares.csv')
 sector_names = list(dfA['short_names']) + ['Agg Y']
 occupation_names = list(dfcurlyL.index)
-
 # reformatting parameters
 Omega = np.array(dfA.iloc[:, 1:], dtype='float64')
 rescaler = np.matrix(1 - shares['Capital share'] - shares['Energy share'])
@@ -117,7 +116,7 @@ occT_vec[-1, i] = multi_occupation_network.AggThetaFunc(dlog_theta, dlog_U, U, V
 i = WageAssumption.index('Labor Market Frictions Only')
 epsK_no_network = epsK
 epsK_no_network[:,0] = np.sum(Omega,axis=1).reshape((J,1))+epsK_no_network[:,1]
-gamma = 0.5
+gamma = 0
 epsW_A, epsW_H, epsW_K = multi_occupation_network.WageElasticityFuncMP(gamma, np.eye(J), epsN, epsK_no_network, curlyF, curlyQ, curlyT, curlyL)
 dlog_wR = multi_occupation_network.WageFunc(dlog_A, dlog_H, dlog_K, epsW_A, epsW_H, epsW_K)
 dlog_theta = multi_occupation_network.ThetaFunc(dlog_A, dlog_H, dlog_K, dlog_wR, dlog_epsN, dlog_lam, np.eye(J), Omega, curlyF, curlyQ, curlyT, curlyE, curlyL, epsN, epsK_no_network)
@@ -132,7 +131,7 @@ occT_vec[-1, i] = multi_occupation_network.AggThetaFunc(dlog_theta, dlog_U, U, V
 
 #3
 i = WageAssumption.index('Labor Market Frictions + Production Linkages')
-gamma = 0.5
+gamma = 0
 epsW_A, epsW_H, epsW_K = multi_occupation_network.WageElasticityFuncMP(gamma, Psi, epsN, epsK, curlyF, curlyQ, curlyT, curlyL)
 dlog_wR = multi_occupation_network.WageFunc(dlog_A, dlog_H, dlog_K, epsW_A, epsW_H, epsW_K)
 dlog_theta = multi_occupation_network.ThetaFunc(dlog_A, dlog_H, dlog_K, dlog_wR, dlog_epsN, dlog_lam, Psi, Omega, curlyF, curlyQ, curlyT, curlyE, curlyL, epsN, epsK)
@@ -144,7 +143,6 @@ dlog_U = multi_occupation_network.UnemploymentFunc(multi_occupation_network.Labo
 occU_vec[:-1,i] = dlog_U.flatten()
 occU_vec[-1, i] = multi_occupation_network.AggUnemploymentFunc(dlog_U, U)
 occT_vec[-1, i] = multi_occupation_network.AggThetaFunc(dlog_theta, dlog_U, U, V)
-
 
 #### Creating Figures ####
 #fig1
