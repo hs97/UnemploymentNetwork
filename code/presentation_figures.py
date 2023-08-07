@@ -114,7 +114,7 @@ occT_vec[-1, i] = multi_occupation_network.AggThetaFunc(dlog_theta, dlog_U, U, V
 
 #2
 i = WageAssumption.index('Labor Market Frictions Only')
-epsK_no_network = epsK
+epsK_no_network = epsK.copy()
 epsK_no_network[:,0] = np.sum(Omega,axis=1).reshape((J,1))+epsK_no_network[:,1]
 gamma = 0
 epsW_A, epsW_H, epsW_K = multi_occupation_network.WageElasticityFuncMP(gamma, np.eye(J), epsN, epsK_no_network, curlyF, curlyQ, curlyT, curlyL)
@@ -152,7 +152,7 @@ xlab = ''
 ylab = '$\ d\log y$ (pct.)'
 save_path = f'../output/figures/presentation/A{A_spec}/{sec_to_shock}_AshockY.png'
 labels = WageAssumption
-bar_plot(100*sectorY_vec, sector_names, title, xlab, ylab, labels, ['tab:blue','tab:orange','tab:green'], save_path, rotation=30, fontsize=10, barWidth = 0.3, dpi=300)
+bar_plot(100*sectorY_vec, sector_names, title, xlab, ylab, labels, save_path, colors=['tab:blue','tab:orange','tab:green'], rotation=30, fontsize=10, barWidth = 0.3, dpi=300)
 
 #fig2
 occupation_names1 =  occupation_names + ['Agg $\\theta$']
@@ -160,7 +160,7 @@ xlab = ''
 ylab = '$d \log \\theta$  (pct.)'
 save_path = f'../output/figures/presentation/A{A_spec}/{sec_to_shock}_AshockT.png'
 labels = ['Labor Market Frictions + Production Linkages', 'Labor Market Frictions Only', 'Production Linkages Only']
-bar_plot(100*occT_vec[:,[0,2,1]], occupation_names1, title, xlab, ylab, labels, ['tab:blue','tab:green','tab:orange'], save_path, rotation=30, fontsize=10, barWidth = 0.3, dpi=300)
+bar_plot(100*occT_vec[:,[0,2,1]], occupation_names1, title, xlab, ylab, labels, save_path, colors=['tab:blue','tab:green','tab:orange'], rotation=30, fontsize=10, barWidth = 0.3, dpi=300)
 
 # fig3
 occupation_names1 = occupation_names + ['Agg U']
@@ -168,7 +168,7 @@ xlab = ''
 ylab = '$d \log U$  (pct.)'
 save_path = f'../output/figures/presentation/A{A_spec}/{sec_to_shock}_AshockU.png'
 labels = ['Labor Market Frictions + Production Linkages', 'Labor Market Frictions Only', 'Production Linkages Only']
-bar_plot(100*occU_vec[:,[0,2,1]], occupation_names1, title, xlab, ylab, labels, ['tab:blue','tab:green','tab:orange'], save_path, rotation=30, fontsize=10, barWidth = 0.3, dpi=300)
+bar_plot(100*occU_vec[:,[0,2,1]], occupation_names1, title, xlab, ylab, labels, save_path, colors=['tab:blue','tab:green','tab:orange'], rotation=30, fontsize=10, barWidth = 0.3, dpi=300)
 
 
 

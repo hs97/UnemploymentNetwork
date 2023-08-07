@@ -39,38 +39,6 @@ def OutputFunc(dlog_A, dlog_H, dlog_K, Psi, curlyQ, curlyF, curlyT, curlyL, epsN
     dlog_y = Xi_y@(cA @ dlog_A + cH @ dlog_H + cK @ dlog_K)
     return dlog_y
 
-def ThetaFunc(dlog_H, dlog_y, Psi, epsN, curlyL, curlyQ, curlyT, curlyF, num=0):
-    """ This function computes changes in sectoral output
-        dlog_H: Jx1 tech shocks
-        dlog_y : Jx1 log output changes
-        dlog_theta: Ox1 log tightness changes
-        Psi: JxJ Leontief inverse
-        curlyF: OxO elasticty of job finding wrt to theta
-        curlyQ: OxO elasticity of vacancy filling wrt to theta
-        curlyT: OxO recruiter producer ratio
-        curlyL: OxJ occupation-sector employment shares
-        epsN: JxO labor elasticity of production
-        epsK: JxK fixed factor elasticity of production changes
-        num: numeraire sector index
-    Returns:
-        dlog_theta : Ox1 log tightness changes
-    """
-    Xi_theta = curlyL@Psi@epsN@(curlyF + curlyQ@curlyT)
-    inv_mat = np.linalg.inv(curlyF - Xi_theta)
-    Xi_nom = np.eye(dlog_H.shape[0]) + inv_mat@curlyL@Psi@epsN@curlyQ@curlyT
-    Xi_nom = np.linalg.inv(Xi_nom) @ inv_mat
-    num_mat = np.ones_like(epsN.T)
-    num_mat[:,num] = 1
-
-    #coefficients
-    cy = Xi_nom@curlyL@Psi@epsN@num_mat
-    cH = Xi_nom@(curlyL@Psi@epsN-np.eye(dlog_H.shape[0]))
-
-    #changes in tightness
-    dlog_theta = cy@dlog_y + cH@dlog_H
-
-    return dlog_theta
-
 #factor prices
 def rFunc(dlog_y, dlog_K, num):
     """ This function computes dlog_r
@@ -86,31 +54,7 @@ def rFunc(dlog_y, dlog_K, num):
     return dlog_r
 
 #sector prices
-def PriceFunc(dlog_A, dlog_r, dlog_theta, Psi, epsN, epsK, curlyQ, curlyT):
-    """ This function computes the vector of price responses
-    Args:
-        dlog_A : Jx1 tech shocks
-        dlog_r: Kx1 change in fixed factor prices
-        dlog_theta - Ox1 log tightness changes
-        Psi: JxJ Leontief inverse
-        curlyQ: OxO elasticity of vacancy filling wrt to theta
-        epsN: JxO labor elasticity of production
-        epsK: JxK fixed factor elasticity of production
-        curlyT: OxO recruiter producer ratio
-        num: indicates which price is numeraire
-    """
-    #coefficients
-    cA = -Psi
-    cr = Psi@epsK
-    ct = -Psi@epsN@curlyQ@curlyT
-
-    #changes in prices
-    dlog_p = cA@dlog_A + cr@dlog_r + ct@dlog_theta
-    return dlog_p
-
-
-#sector prices
-def PriceFuncAlt(dlog_A, dlog_H, dlog_K, Psi, epsN, epsK, curlyQ, curlyT, curlyF, curlyL, num=0):
+def PriceFunc(dlog_A, dlog_H, dlog_K, Psi, epsN, epsK, curlyQ, curlyT, curlyF, curlyL, num=0):
     """ This function computes the vector of price responses
     Args:
         dlog_A : Jx1 tech shocks
@@ -146,7 +90,7 @@ def PriceFuncAlt(dlog_A, dlog_H, dlog_K, Psi, epsN, epsK, curlyQ, curlyT, curlyF
     dlog_p = inv_Xi@(cA@dlog_A + cH@dlog_H + cK@dlog_K)
     return dlog_p
 
-def ThetaFuncAlt(dlog_H, dlog_A, dlog_K, dlog_p, Psi, epsN, epsK, curlyL, curlyQ, curlyT, curlyF, num=0):
+def ThetaFunc(dlog_A, dlog_H, dlog_K, dlog_p, Psi, epsN, epsK, curlyL, curlyQ, curlyT, curlyF, num=0):
     """ This function computes changes in sectoral output
         dlog_H: Jx1 tech shocks
         dlog_y : Jx1 log output changes
