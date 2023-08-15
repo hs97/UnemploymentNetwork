@@ -176,6 +176,8 @@ occU_vec[:-1,i] = dlog_U.flatten()
 occU_vec[-1, i] = multi_occupation_network.AggUnemploymentFunc(dlog_U, U)
 occT_vec[-1, i] = multi_occupation_network.AggThetaFunc(dlog_theta, dlog_U, U, V)
 print(sectorY_vec[:, i])
+print(occU_vec[:, i])
+print(occT_vec[:, i])
 
 #### Creating Figures ####
 #fig1
@@ -185,26 +187,25 @@ xlab = ''
 ylab = '$\ d\log y$ (pct.)'
 save_path = f'../output/figures/calib3/A{A_spec}/{sec_to_shock}_AshockY.png'
 labels = WageAssumption
-bar_plot(100*sectorY_vec, sector_names, title, xlab, ylab, labels, #colors=['tab:blue','tab:orange','tab:green', 'tab:red', 'tab:purple'], 
-         save_path=save_path, rotation=30, fontsize=10, barWidth = 0.15, dpi=300)
-
+bar_plot(100*sectorY_vec, sector_names, title, xlab, ylab, labels, colors=['tab:blue','tab:orange','tab:green', 'tab:red', 'tab:purple'], 
+         save_path=save_path, rotation=30, fontsize=10, barWidth=0.15, dpi=300)
 #fig2
 occupation_names1 =  occupation_names + ['Agg $\\theta$']
 xlab = ''
 ylab = '$d \log \\theta$  (pct.)'
 save_path = f'../output/figures/calib3/A{A_spec}/{sec_to_shock}_AshockT.png'
-labels = ['0.5MP', "Rigid Real", "Rigid Nominal",'Production Linkages Only', 'Labor Market Frictions Only']
-bar_plot(100*occT_vec[:,:], occupation_names1, title, xlab, ylab, labels, colors=['tab:blue','tab:green','tab:orange', 'tab:red', 'tab:purple'], 
-         save_path=save_path, rotation=30, fontsize=10, barWidth = 0.15, dpi=300)
-
+labels = ['0.5MP', "Rigid Real", "Rigid Nominal", 'Labor Market Frictions Only']
+bar_plot(100*occT_vec[:, [0, 1, 2, 4]], occupation_names1, title, xlab, ylab, labels, colors=['tab:blue','tab:orange','tab:green', 'tab:purple'], 
+         save_path=save_path, rotation=30, fontsize=10, barWidth=0.2, dpi=300)
+print(occT_vec[:, [0, 1, 2, 4]])
 # fig3
 occupation_names1 = occupation_names + ['Agg U']
 xlab = ''
 ylab = '$d \log U$  (pct.)'
 save_path = f'../output/figures/calib3/A{A_spec}/{sec_to_shock}_AshockU.png'
-labels = ['0.5MP', "Rigid Real", "Rigid Nominal",'Production Linkages Only', 'Labor Market Frictions Only']
-bar_plot(100*occU_vec[:,:], occupation_names1, title, xlab, ylab, labels, colors=['tab:blue','tab:green','tab:orange', 'tab:red', 'tab:purple'], 
-         save_path=save_path, rotation=30, fontsize=10, barWidth = 0.15, dpi=300)
+labels = ['0.5MP', "Rigid Real", "Rigid Nominal", 'Labor Market Frictions Only']
+bar_plot(100*occU_vec[:, [0, 1, 2, 4]], occupation_names1, title, xlab, ylab, labels, colors=['tab:blue','tab:orange','tab:green', 'tab:purple'], 
+         save_path=save_path, rotation=30, fontsize=10, barWidth=0.2, dpi=300)
 
 
 
