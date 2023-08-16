@@ -244,19 +244,17 @@ def WageElasticityFuncMP(gamma, Psi, epsN, epsK, curlyF, curlyQ, curlyT, curlyL)
     return epsW_A, epsW_H, epsW_K
 
 
-def UnemploymentRateFunc(dlog_theta, theta, curlyF, phi):
+def UnemploymentFunc(dlog_theta, dlog_H, curlyF, U, L):
     # dlog_L : Ox1 change in labor (demand or supply)
     # dlog_H : Ox1 labor force shocks
-    f = np.diag(np.diag(phi) * np.diag(theta)**(np.diag(curlyF)))
-    print(np.diag(f))
-    dlog_u = - f @ np.linalg.inv((np.eye(f.shape[0])-f)) @ curlyF @ dlog_theta
-    return dlog_u
+    
+    dlog_U = dlog_H - np.linalg.inv(np.diag(U.flatten())) @ np.diag(L.flatten()) @ curlyF @ dlog_theta
+    return dlog_U
 
-def AggUnemploymentRateFunc(dlog_H, dlog_u, U, H):
+def AggUnemploymentFunc(dlog_U, U):
     U = np.diag(U.flatten())
-    H = np.diag(H.flatten())
-    dlog_uagg = np.ones((1,U.shape[0]))@((U/np.sum(U)-H/np.sum(H)) @ dlog_H - (U/np.sum(U)) @ dlog_u) 
-    return dlog_uagg
+    dlog_Uagg = np.ones((1,U.shape[0])) @ (U / np.sum(U)) @ dlog_U 
+    return dlog_Uagg
 
 def AggThetaFunc(dlog_theta, dlog_U, U, V):
     dlog_V = dlog_theta + dlog_U 
