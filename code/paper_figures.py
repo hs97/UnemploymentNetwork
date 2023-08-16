@@ -47,10 +47,12 @@ K = epsK.shape[1]
 # Omega = np.zeros_like(Omega)
 # Psi = np.eye(Omega.shape[0])
 θ = dfLabor_market_yearly['Tightness']
+print(θ)
 ν = dfMatching_params['unemployment_elasticity']
 U = np.array(dfLabor_market_yearly['Unemployment']).reshape((O,1))
 V = np.array(dfLabor_market_yearly['Vacancy']).reshape((O,1))
 theta = np.diag(V.flatten()/U.flatten())
+print(theta)
 
 tau = dfTau['Tau']
 curlyT = np.diag(tau)
