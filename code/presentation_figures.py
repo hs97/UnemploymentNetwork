@@ -133,12 +133,12 @@ if do_unemployment:
 i = WageAssumption.index('Labor Market Frictions Only')
 epsK_no_network = epsK.copy()
 epsK_no_network[:,0] = np.sum(Omega,axis=1).reshape((J,1))+epsK_no_network[:,1]
-gamma = 0
+gamma = 0.7
 epsW_A, epsW_H, epsW_K = multi_occupation_network.WageElasticityFuncMP(gamma, np.eye(J), epsN, epsK_no_network, curlyF, curlyQ, curlyT, curlyL)
 dlog_wR = multi_occupation_network.WageFunc(dlog_A, dlog_H, dlog_K, epsW_A, epsW_H, epsW_K)
-dlog_theta = multi_occupation_network.ThetaFunc(dlog_A, dlog_H, dlog_K, dlog_wR, dlog_epsN, dlog_lam, np.eye(J), Omega, curlyF, curlyQ, curlyT, curlyE, curlyL, epsN, epsK_no_network)
+dlog_theta = multi_occupation_network.ThetaFunc(dlog_A, dlog_H, dlog_K, dlog_wR, dlog_epsN, dlog_lam, np.eye(J), np.zeros_like(Psi), curlyF, curlyQ, curlyT, curlyE, curlyL, epsN, epsK_no_network)
 occT_vec[:-1, i] = dlog_theta.flatten()
-dlog_y = multi_occupation_network.OutputFunc(dlog_A, dlog_H, dlog_K, dlog_theta, dlog_lam, np.eye(J), Omega, curlyQ, curlyF, epsN, epsK_no_network, curlyT, curlyE)
+dlog_y = multi_occupation_network.OutputFunc(dlog_A, dlog_H, dlog_K, dlog_theta, dlog_lam, np.eye(J), np.zeros_like(Psi), curlyQ, curlyF, epsN, epsK_no_network, curlyT, curlyE)
 sectorY_vec[:-1, i] = dlog_y.flatten()
 sectorY_vec[-1, i] = multi_occupation_network.AggOutputFunc(dlog_y, dlog_lam, dlog_epsD, epsD)
 if do_unemployment:
@@ -151,7 +151,7 @@ if do_unemployment:
 
 #3
 i = WageAssumption.index('Labor Market Frictions + Production Linkages')
-gamma = 0
+gamma = 0.7
 epsW_A, epsW_H, epsW_K = multi_occupation_network.WageElasticityFuncMP(gamma, Psi, epsN, epsK, curlyF, curlyQ, curlyT, curlyL)
 dlog_wR = multi_occupation_network.WageFunc(dlog_A, dlog_H, dlog_K, epsW_A, epsW_H, epsW_K)
 dlog_theta = multi_occupation_network.ThetaFunc(dlog_A, dlog_H, dlog_K, dlog_wR, dlog_epsN, dlog_lam, Psi, Omega, curlyF, curlyQ, curlyT, curlyE, curlyL, epsN, epsK)
