@@ -176,7 +176,6 @@ if do_unemployment:
 
 reorder = True
 fig_seq = True
-order_ascending = False
 contains_agg = True
 #fig1
 sector_names = list(dfA['short_names']) + ['Agg Y']
@@ -185,7 +184,7 @@ xlab = ''
 ylab = '$\ d\log y$ (pct.)'
 save_path = f'output/figures/presentation/{sec_to_shock}_AshockY'
 labels = WageAssumption
-bar_plot(100*sectorY_vec, sector_names, title, xlab, ylab, labels, save_path=save_path, colors=['tab:blue','tab:orange','tab:green'], rotation=30, fontsize=10, barWidth = 0.3, dpi=300, reorder=reorder, gen_fig_sequence=fig_seq, order_ascending=order_ascending, contains_agg=contains_agg)
+bar_plot(100*sectorY_vec, sector_names, title, xlab, ylab, labels, save_path=save_path, colors=['tab:blue','tab:orange','tab:green'], rotation=30, fontsize=10, barWidth = 0.3, dpi=300, reorder=reorder, gen_fig_sequence=fig_seq, order_ascending=False, contains_agg=contains_agg)
 
 # Fix by removing the no frictions case from here
 if do_unemployment:
@@ -194,40 +193,110 @@ if do_unemployment:
     xlab = ''
     ylab = '$d \log \\theta$  (pct.)'
     save_path = f'output/figures/presentation/{sec_to_shock}_AshockT'
-    labels = ['Labor Market Frictions + Production Linkages', 'Labor Market Frictions Only']
-    bar_plot(100*occT_vec[:,[0,2]], occupation_names1, title, xlab, ylab, labels, save_path=save_path, colors=['tab:blue','tab:green'], rotation=30, fontsize=10, barWidth = 0.45, dpi=300, reorder=reorder, gen_fig_sequence=fig_seq, order_ascending=order_ascending, contains_agg=contains_agg)
+    labels = WageAssumption
+    bar_plot(100*occT_vec, occupation_names1, title, xlab, ylab, labels, save_path=save_path, colors=['tab:blue','tab:orange','tab:green'], rotation=30, fontsize=10, barWidth = 0.3, dpi=300, reorder=reorder, gen_fig_sequence=fig_seq, order_ascending=False, contains_agg=contains_agg)
 
     # fig3
-    order_ascending = True
     occupation_names1 = occupation_names + ['Agg U']
     xlab = ''
     ylab = '$d \log U$  (pct.)'
     save_path = f'output/figures/presentation/{sec_to_shock}_AshockU'
-    labels = ['Labor Market Frictions + Production Linkages', 'Labor Market Frictions Only']
-    bar_plot(100*occU_vec[:,[0,2]], occupation_names1, title, xlab, ylab, labels, save_path=save_path, colors=['tab:blue','tab:green'], rotation=30, fontsize=10, barWidth = 0.45, dpi=300, reorder=reorder, gen_fig_sequence=fig_seq, order_ascending=order_ascending, contains_agg=contains_agg)
+    labels = WageAssumption
+    bar_plot(100*occU_vec, occupation_names1, title, xlab, ylab, labels, save_path=save_path, colors=['tab:blue','tab:orange','tab:green'], rotation=30, fontsize=10, barWidth = 0.3, dpi=300, reorder=reorder, gen_fig_sequence=fig_seq, order_ascending=True, contains_agg=contains_agg)
 
     # fig4
     occupation_names1 = occupation_names + ['Agg U']
     xlab = ''
     ylab = 'Pct. Point Change in Unemployment Rate'
     save_path = f'output/figures/presentation/{sec_to_shock}_AshockUrate'
-    labels = ['Labor Market Frictions + Production Linkages', 'Labor Market Frictions Only']
-    bar_plot(100*occUrate_vec[:,[0,2]], occupation_names1, title, xlab, ylab, labels, save_path=save_path, colors=['tab:blue','tab:green'], rotation=30, fontsize=10, barWidth = 0.45, dpi=300, reorder=reorder, gen_fig_sequence=fig_seq, order_ascending=order_ascending, contains_agg=contains_agg)
+    labels = WageAssumption
+    bar_plot(100*occUrate_vec, occupation_names1, title, xlab, ylab, labels, save_path=save_path, colors=['tab:blue','tab:orange','tab:green'], rotation=30, fontsize=10, barWidth = 0.3, dpi=300, reorder=reorder, gen_fig_sequence=fig_seq, order_ascending=True, contains_agg=contains_agg)
 
 
 ## Additional figures
 
 # Matching propagation with matching params only
-curlyM = -curlyQ
-I_o = np.eye(curlyT.shape[0])
-I_j = np.eye(Psi.shape[0]) 
-Xi_theta = curlyL @ Psi @ epsN @ (I_o - curlyM @ (I_o + curlyT))
-coeffA = Psi @ (I_j + epsN @ (I_o - curlyM @ (I_o + curlyT)) @ np.linalg.inv((I_o - curlyM - Xi_theta)) @ (curlyL @ Psi - epsW_A))
-sigma = np.array(dfDemand['demand_elasticity']).reshape((J,1))
-param = {'epsNtil':epsN, 'coeffA':coeffA, 'curlyL':curlyL, 'epsW_A':epsW_A, 'sigma':sigma, 'dlog_A':dlog_A, 'curlyMtil':curlyM, 'agg':True}
-control0 = np.diag(curlyM)
-optim_out = opt.minimize(fun=nonet.obj_reparam, x0=control0, args=(param), method='Nelder-Mead', tol=1e-12, options={'maxiter':1000000})
-curlyTtil = np.diag(optim_out.x)
+reparamY_vec = np.zeros((J+1,2))
+reparamY_vec[:,0] = sectorY_vec[:,0]
+
+param = {'epsN':epsN, 'curlyL':curlyL, 'dlog_A':dlog_A, 'dlog_H':dlog_H, 'dlog_K':dlog_K, 'dlog_wR':dlog_wR, 'dlog_epsN':dlog_epsN,
+         'dlog_lam':dlog_lam, 'curlyF':curlyF, 'curlyQ':curlyQ, 'curlyE':curlyE, 'curlyT':curlyT, 'dlog_epsD':dlog_epsD,
+         'epsD':epsD,'epsK':epsK, 'U':U, 'L':L, 'Psi':Psi, 'Omega':Omega ,'agg':True, 'targ':'y', 'close_params':False, 'control_name':'curlyQ'}
+if param['control_name'] == 'curlyT':
+    control0 = np.diag(curlyT)
+if param['control_name'] == 'curlyQ':
+    control0 = np.diag(curlyQ)
+optim_out = opt.minimize(fun=nonet.obj_reparam_tau, x0=control0, args=(param), method='Nelder-Mead', tol=1e-8, options={'maxiter':10000})
+if param['control_name'] == 'curlyT':
+    curlyTtil = np.diag(optim_out.x)
+    curlyQtil = curlyQ
+    curlyFtil = curlyF
+if param['control_name'] == 'curlyQ':
+    curlyTtil = curlyT
+    curlyQtil = np.diag(optim_out.x)
+    curlyFtil = np.eye(O) + curlyQtil
+
+I_j = np.eye(curlyL.shape[1])
+Psi_til = I_j
+Omega_til = np.zeros_like(Psi)
+dlog_theta = multi_occupation_network.ThetaFunc(dlog_A, dlog_H, dlog_K, dlog_wR, dlog_epsN, dlog_lam, Psi_til, Omega_til, curlyFtil, curlyQtil, curlyTtil, curlyE, curlyL, epsN, epsK)
+dlog_y = multi_occupation_network.OutputFunc(dlog_A, dlog_H, dlog_K, dlog_theta, dlog_lam, Psi_til, Omega_til, curlyQtil, curlyFtil, epsN, epsK, curlyTtil, curlyE)
+reparamY_vec[:-1, 1] = dlog_y.flatten()
+reparamY_vec[-1, 1] = multi_occupation_network.AggOutputFunc(dlog_y, dlog_lam, dlog_epsD, epsD)
+
+# fig reparam
+xlab = ''
+ylab = '$\ d\log y$ (pct.)'
+save_path = f'output/figures/presentation/{sec_to_shock}_AshockYreparam'
+labels = ['Labor Market Frictions + Production Linkages', 'Reparametrized Labor Market Frictions']
+bar_plot(100*reparamY_vec, sector_names, title, xlab, ylab, labels, save_path=save_path, colors=['tab:blue','tab:orange'], rotation=30, fontsize=10, barWidth = 0.45, dpi=300, reorder=reorder, gen_fig_sequence=fig_seq, order_ascending=False, contains_agg=contains_agg)
+
+if do_unemployment:
+    reparamU_vec = np.zeros((O+1,2))
+    reparamU_vec[:,0] = occU_vec[:,0]
+    reparamUrate_vec = np.zeros((O+1,2))
+    reparamUrate_vec[:,0] = occUrate_vec[:,0]
+    param['targ'] = 'U'
+    param['control_name'] = 'curlyQ'
+    if param['control_name'] == 'curlyT':
+        control0 = np.diag(curlyT)
+    if param['control_name'] == 'curlyQ':
+        control0 = np.diag(curlyQ)
+    optim_out = opt.minimize(fun=nonet.obj_reparam_tau, x0=control0, args=(param), method='Nelder-Mead', tol=1e-8, options={'maxiter':10000})
+    if param['control_name'] == 'curlyT':
+        curlyTtil = np.diag(optim_out.x)
+        curlyQtil = curlyQ
+        curlyFtil = curlyF
+    if param['control_name'] == 'curlyQ':
+        curlyTtil = curlyT
+        curlyQtil = np.diag(optim_out.x)
+        curlyFtil = np.eye(O) + curlyQtil
+    I_j = np.eye(curlyL.shape[1])
+    Psi_til = I_j
+    Omega_til = np.zeros_like(Psi)
+    dlog_theta = multi_occupation_network.ThetaFunc(dlog_A, dlog_H, dlog_K, dlog_wR, dlog_epsN, dlog_lam, Psi_til, Omega_til, curlyFtil, curlyQtil, curlyTtil, curlyE, curlyL, epsN, epsK)
+    dlog_U = multi_occupation_network.UnemploymentFunc(dlog_theta, dlog_H, curlyFtil, U, L)
+    reparamU_vec[:-1,1] = dlog_U.flatten()
+    reparamU_vec[-1, 1] = multi_occupation_network.AggUnemploymentFunc(dlog_U, U)
+    reparamUrate_vec[:-1,1] = -(U.flatten()/(U.flatten()+L.flatten()) - (1+occU_vec[:-1,i].flatten()) * U.flatten()/(U.flatten()+L.flatten()))
+    reparamUrate_vec[-1,1] = -(U.sum()/(U.sum()+L.sum()) - (1+occU_vec[-1,i].flatten()) * U.sum()/(U.sum()+L.sum()))
+    # fig reparam
+    xlab = ''
+    ylab = 'Pct. Point Change in Unemployment Rate'
+    save_path = f'output/figures/presentation/{sec_to_shock}_AshockUratereparam'
+    occupation_names1 = occupation_names + ['Agg U']
+    labels = ['Labor Market Frictions + Production Linkages', 'Reparametrized Labor Market Frictions']
+    bar_plot(100*reparamUrate_vec, occupation_names1, title, xlab, ylab, labels, save_path=save_path, colors=['tab:blue','tab:orange'], rotation=30, fontsize=10, barWidth = 0.45, dpi=300, reorder=reorder, gen_fig_sequence=fig_seq, order_ascending=True, contains_agg=contains_agg)
+        
+
+I_j = np.eye(curlyL.shape[1])
+Psi_til = I_j
+Omega_til = np.zeros_like(Psi)
+dlog_theta = multi_occupation_network.ThetaFunc(dlog_A, dlog_H, dlog_K, dlog_wR, dlog_epsN, dlog_lam, Psi_til, Omega_til, curlyFtil, curlyQtil, curlyTtil, curlyE, curlyL, epsN, epsK)
+dlog_y = multi_occupation_network.OutputFunc(dlog_A, dlog_H, dlog_K, dlog_theta, dlog_lam, Psi_til, Omega_til, curlyQtil, curlyFtil, epsN, epsK, curlyTtil, curlyE)
+reparamY_vec[:-1, 1] = dlog_y.flatten()
+reparamY_vec[-1, 1] = multi_occupation_network.AggOutputFunc(dlog_y, dlog_lam, dlog_epsD, epsD)
+
 
 # What is unemployment pre- and post-shock
 Urate_data = np.zeros_like(occUrate_vec[:,0])
@@ -244,7 +313,7 @@ xlab = ''
 ylab = 'Pct. Point Change in Unemployment Rate'
 save_path = f'output/figures/presentation/{sec_to_shock}_UrateComp'
 labels = ['Change in Unemployment Rate', 'Pre-Shock Unemployment Rate', 'Post-Shock Unemployment Rate']
-bar_plot(100*Urate_comp, occupation_names1, title, xlab, ylab, labels, save_path=save_path, colors=['tab:blue','tab:green','tab:orange'], rotation=30, fontsize=10, barWidth = 0.3, dpi=300, reorder=reorder, gen_fig_sequence=fig_seq, order_ascending=order_ascending, contains_agg=contains_agg)
+bar_plot(100*Urate_comp, occupation_names1, title, xlab, ylab, labels, save_path=save_path, colors=['tab:blue','tab:green','tab:orange'], rotation=30, fontsize=10, barWidth = 0.3, dpi=300, reorder=reorder, gen_fig_sequence=fig_seq, order_ascending=True, contains_agg=contains_agg)
 
 
 print('done')

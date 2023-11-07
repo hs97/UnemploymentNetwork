@@ -4,14 +4,15 @@ import pandas as pd
 
 def bar_plot(data, sector_names, title, xlab, ylab, labels, save_path = None, colors=None, rotation=30, fontsize=15, barWidth=0.25, dpi=300, reorder = True, gen_fig_sequence = False, order_ascending=True, contains_agg=True):
     fig = plt.subplots(dpi=dpi)
-
+    s_names = sector_names.copy()
     if reorder:
         if contains_agg:
             df = pd.DataFrame(index = sector_names[:-1])
+            
             for i, lab in enumerate(labels):
                 df[lab] = data[:-1,i]
             df = df.sort_values(labels[0], ascending=order_ascending)
-            sector_names[:-1] = list(df.index)
+            s_names[:-1] = list(df.index)
             agg_data = pd.DataFrame(data = data[-1,:].reshape((1,len(labels))), columns = labels, index=[sector_names[-1]])
             df = pd.concat([df, agg_data], axis=0)
             data = np.array(df)
@@ -22,17 +23,17 @@ def bar_plot(data, sector_names, title, xlab, ylab, labels, save_path = None, co
                 df[lab] = data[:,i]
             df = df.sort_values(labels[0], ascending=order_ascending)
             data = np.array(df)
-            sector_names = list(df.index)
+            s_names = list(df.index)
 
     if gen_fig_sequence:
         for fs in range(len(labels)):
             data[:, :fs] = 0
 
             #creating arrays
-            br = np.zeros((len(sector_names), data.shape[1]))
+            br = np.zeros((len(s_names), data.shape[1]))
 
             #initializing
-            br[:, 0] = np.arange(len(sector_names))
+            br[:, 0] = np.arange(len(s_names))
             if colors == None:
                 plt.bar(br[:,0], data[:,0], width=barWidth, label=labels[0]) 
             else:  
@@ -47,8 +48,8 @@ def bar_plot(data, sector_names, title, xlab, ylab, labels, save_path = None, co
                 else:
                     plt.bar(br[:, i], data[:, i], width=barWidth,
                             color=colors[i], label=labels[i])
-            plt.xticks([r + barWidth for r in range(len(sector_names))],
-                        sector_names, rotation=rotation, fontsize=6)
+            plt.xticks([r + barWidth for r in range(len(s_names))],
+                        s_names, rotation=rotation, fontsize=6)
 
             plt.xlabel(xlab, fontweight='bold', fontsize=fontsize)
             plt.ylabel(ylab, fontweight='bold', fontsize=fontsize)
@@ -59,10 +60,10 @@ def bar_plot(data, sector_names, title, xlab, ylab, labels, save_path = None, co
             plt.close()
     else:
         #creating arrays
-            br = np.zeros((len(sector_names), data.shape[1]))
+            br = np.zeros((len(s_names), data.shape[1]))
 
             #initializing
-            br[:, 0] = np.arange(len(sector_names))
+            br[:, 0] = np.arange(len(s_names))
             if colors == None:
                 plt.bar(br[:,0], data[:,0], width=barWidth, label=labels[0]) 
             else:  
@@ -77,8 +78,8 @@ def bar_plot(data, sector_names, title, xlab, ylab, labels, save_path = None, co
                 else:
                     plt.bar(br[:, i], data[:, i], width=barWidth,
                             color=colors[i], label=labels[i])
-            plt.xticks([r + barWidth for r in range(len(sector_names))],
-                        sector_names, rotation=rotation, fontsize=6)
+            plt.xticks([r + barWidth for r in range(len(s_names))],
+                        s_names, rotation=rotation, fontsize=6)
 
             plt.xlabel(xlab, fontweight='bold', fontsize=fontsize)
             plt.ylabel(ylab, fontweight='bold', fontsize=fontsize)
