@@ -135,6 +135,10 @@ epsK_no_network = epsK.copy()
 epsK_no_network[:,0] = np.sum(Omega,axis=1).reshape((J,1))+epsK_no_network[:,1]
 gamma = 0.7
 epsW_A, epsW_H, epsW_K = multi_occupation_network.WageElasticityFuncMP(gamma, np.eye(J), epsN, epsK_no_network, curlyF, curlyQ, curlyT, curlyL)
+#gamma_A = 0.7
+#gamma_H = 0
+#gamma_K = 0
+#epsW_A, epsW_H, epsW_K = multi_occupation_network.WageElasticityFunc(gamma_A, gamma_H, gamma_K, np.eye(J), curlyL, epsN, epsK_no_network)
 dlog_wR = multi_occupation_network.WageFunc(dlog_A, dlog_H, dlog_K, epsW_A, epsW_H, epsW_K)
 dlog_theta = multi_occupation_network.ThetaFunc(dlog_A, dlog_H, dlog_K, dlog_wR, dlog_epsN, dlog_lam, np.eye(J), np.zeros_like(Psi), curlyF, curlyQ, curlyT, curlyE, curlyL, epsN, epsK_no_network)
 occT_vec[:-1, i] = dlog_theta.flatten()
@@ -152,7 +156,11 @@ if do_unemployment:
 #3
 i = WageAssumption.index('Labor Market Frictions + Production Linkages')
 gamma = 0.7
-epsW_A, epsW_H, epsW_K = multi_occupation_network.WageElasticityFuncMP(gamma, Psi, epsN, epsK, curlyF, curlyQ, curlyT, curlyL)
+epsW_A, epsW_H, epsW_K = multi_occupation_network.WageElasticityFuncMP(gamma, np.eye(J), epsN, epsK_no_network, curlyF, curlyQ, curlyT, curlyL)
+#gamma_A = 0.7
+#gamma_H = 0
+#gamma_K = 0
+#epsW_A, epsW_H, epsW_K = multi_occupation_network.WageElasticityFunc(gamma_A, gamma_H, gamma_K, Psi, curlyL, epsN, epsK)
 dlog_wR = multi_occupation_network.WageFunc(dlog_A, dlog_H, dlog_K, epsW_A, epsW_H, epsW_K)
 dlog_theta = multi_occupation_network.ThetaFunc(dlog_A, dlog_H, dlog_K, dlog_wR, dlog_epsN, dlog_lam, Psi, Omega, curlyF, curlyQ, curlyT, curlyE, curlyL, epsN, epsK)
 occT_vec[:-1, i] = dlog_theta.flatten()
@@ -275,11 +283,14 @@ if do_unemployment:
     Psi_til = I_j
     Omega_til = np.zeros_like(Psi)
     dlog_theta = multi_occupation_network.ThetaFunc(dlog_A, dlog_H, dlog_K, dlog_wR, dlog_epsN, dlog_lam, Psi_til, Omega_til, curlyFtil, curlyQtil, curlyTtil, curlyE, curlyL, epsN, epsK)
+    dlog_y = multi_occupation_network.OutputFunc(dlog_A, dlog_H, dlog_K, dlog_theta, dlog_lam, Psi_til, Omega_til, curlyQtil, curlyFtil, epsN, epsK, curlyTtil, curlyE)
+    reparamY_vec[:-1, 1] = dlog_y.flatten()
+    reparamY_vec[-1, 1] = multi_occupation_network.AggOutputFunc(dlog_y, dlog_lam, dlog_epsD, epsD)
     dlog_U = multi_occupation_network.UnemploymentFunc(dlog_theta, dlog_H, curlyFtil, U, L)
     reparamU_vec[:-1,1] = dlog_U.flatten()
     reparamU_vec[-1, 1] = multi_occupation_network.AggUnemploymentFunc(dlog_U, U)
-    reparamUrate_vec[:-1,1] = -(U.flatten()/(U.flatten()+L.flatten()) - (1+occU_vec[:-1,i].flatten()) * U.flatten()/(U.flatten()+L.flatten()))
-    reparamUrate_vec[-1,1] = -(U.sum()/(U.sum()+L.sum()) - (1+occU_vec[-1,i].flatten()) * U.sum()/(U.sum()+L.sum()))
+    reparamUrate_vec[:-1,1] = -(U.flatten()/(U.flatten()+L.flatten()) - (1+reparamU_vec[:-1,1].flatten()) * U.flatten()/(U.flatten()+L.flatten()))
+    reparamUrate_vec[-1,1] = -(U.sum()/(U.sum()+L.sum()) - (1+reparamU_vec[-1,1].flatten()) * U.sum()/(U.sum()+L.sum()))
     # fig reparam
     xlab = ''
     ylab = 'Pct. Point Change in Unemployment Rate'
@@ -287,7 +298,14 @@ if do_unemployment:
     occupation_names1 = occupation_names + ['Agg U']
     labels = ['Labor Market Frictions + Production Linkages', 'Reparametrized Labor Market Frictions']
     bar_plot(100*reparamUrate_vec, occupation_names1, title, xlab, ylab, labels, save_path=save_path, colors=['tab:blue','tab:orange'], rotation=30, fontsize=10, barWidth = 0.45, dpi=300, reorder=reorder, gen_fig_sequence=fig_seq, order_ascending=True, contains_agg=contains_agg)
-        
+    
+    # fig reparam 
+    xlab = ''
+    ylab = '$\ d\log y$ (pct.)'
+    save_path = f'output/figures/presentation/{sec_to_shock}_AshockUratereparamY'
+    labels = ['Labor Market Frictions + Production Linkages', 'Reparametrized Labor Market Frictions']
+    bar_plot(100*reparamY_vec, sector_names, title, xlab, ylab, labels, save_path=save_path, colors=['tab:blue','tab:orange'], rotation=30, fontsize=10, barWidth = 0.45, dpi=300, reorder=reorder, gen_fig_sequence=fig_seq, order_ascending=False, contains_agg=contains_agg)
+            
 
 I_j = np.eye(curlyL.shape[1])
 Psi_til = I_j
@@ -296,7 +314,6 @@ dlog_theta = multi_occupation_network.ThetaFunc(dlog_A, dlog_H, dlog_K, dlog_wR,
 dlog_y = multi_occupation_network.OutputFunc(dlog_A, dlog_H, dlog_K, dlog_theta, dlog_lam, Psi_til, Omega_til, curlyQtil, curlyFtil, epsN, epsK, curlyTtil, curlyE)
 reparamY_vec[:-1, 1] = dlog_y.flatten()
 reparamY_vec[-1, 1] = multi_occupation_network.AggOutputFunc(dlog_y, dlog_lam, dlog_epsD, epsD)
-
 
 # What is unemployment pre- and post-shock
 Urate_data = np.zeros_like(occUrate_vec[:,0])
@@ -315,5 +332,41 @@ save_path = f'output/figures/presentation/{sec_to_shock}_UrateComp'
 labels = ['Change in Unemployment Rate', 'Pre-Shock Unemployment Rate', 'Post-Shock Unemployment Rate']
 bar_plot(100*Urate_comp, occupation_names1, title, xlab, ylab, labels, save_path=save_path, colors=['tab:blue','tab:green','tab:orange'], rotation=30, fontsize=10, barWidth = 0.3, dpi=300, reorder=reorder, gen_fig_sequence=fig_seq, order_ascending=True, contains_agg=contains_agg)
 
+
+# Robustness to wage rigidity
+MP_names = ['0.7MP', '0.9MP', '0.95MP', '0.99MP']
+sectorY_vec_robust = np.zeros((sectorY_vec.shape[0],4))
+occU_vec_robust = np.zeros((occU_vec.shape[0],4))
+occUrate_vec_robust = np.zeros_like(occU_vec_robust)
+
+MP_vec = [0.7, 0.9, 0.95, 0.99]
+for i in range(len(MP_vec)):
+    gamma = MP_vec[i]
+    epsW_A, epsW_H, epsW_K = multi_occupation_network.WageElasticityFuncMP(gamma, np.eye(J), epsN, epsK_no_network, curlyF, curlyQ, curlyT, curlyL)
+
+    dlog_wR = multi_occupation_network.WageFunc(dlog_A, dlog_H, dlog_K, epsW_A, epsW_H, epsW_K)
+    dlog_theta = multi_occupation_network.ThetaFunc(dlog_A, dlog_H, dlog_K, dlog_wR, dlog_epsN, dlog_lam, Psi, Omega, curlyF, curlyQ, curlyT, curlyE, curlyL, epsN, epsK)
+    dlog_y = multi_occupation_network.OutputFunc(dlog_A, dlog_H, dlog_K, dlog_theta, dlog_lam, Psi, Omega, curlyQ, curlyF, epsN, epsK, curlyT, curlyE)
+    sectorY_vec_robust[:-1, i] = dlog_y.flatten()
+    sectorY_vec_robust[-1, i] = multi_occupation_network.AggOutputFunc(dlog_y, dlog_lam, dlog_epsD, epsD)
+    if do_unemployment:
+        dlog_U = multi_occupation_network.UnemploymentFunc(dlog_theta, dlog_H, curlyF, U, L)
+        occU_vec_robust[:-1,i] = dlog_U.flatten()
+        occU_vec_robust[-1, i] = multi_occupation_network.AggUnemploymentFunc(dlog_U, U)
+        occUrate_vec_robust[:-1,i] = -(U.flatten()/(U.flatten()+L.flatten()) - (1+occU_vec_robust[:-1,i].flatten()) * U.flatten()/(U.flatten()+L.flatten()))
+        occUrate_vec_robust[-1,i] = -(U.sum()/(U.sum()+L.sum()) - (1+occU_vec_robust[-1,i].flatten()) * U.sum()/(U.sum()+L.sum()))
+
+# fig robust
+xlab = ''
+ylab = '$\ d\log y$ (pct.)'
+save_path = f'output/figures/presentation/{sec_to_shock}_AshockY_robust'
+bar_plot(100*sectorY_vec_robust, sector_names, title, xlab, ylab, MP_names, save_path=save_path, colors=['tab:blue','tab:orange','tab:green','tab:red'], rotation=30, fontsize=10, barWidth = 0.23, dpi=300, reorder=reorder, gen_fig_sequence=False, order_ascending=False, contains_agg=contains_agg)
+
+occupation_names1 = occupation_names + ['Agg U']
+xlab = ''
+ylab = 'Pct. Point Change in Unemployment Rate'
+save_path = f'output/figures/presentation/{sec_to_shock}_AshockUrate_robust'
+labels = WageAssumption
+bar_plot(100*occUrate_vec_robust, occupation_names1, title, xlab, ylab, MP_names, save_path=save_path, colors=['tab:blue','tab:orange','tab:green','tab:red'], rotation=30, fontsize=10, barWidth = 0.23, dpi=300, reorder=reorder, gen_fig_sequence=False, order_ascending=True, contains_agg=contains_agg)
 
 print('done')
