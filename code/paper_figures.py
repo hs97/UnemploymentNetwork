@@ -50,17 +50,18 @@ dfLUmerged = dfLabor_market_yearly.merge(dfL, how='inner', left_on='variable',ri
 # Psi = np.eye(Omega.shape[0])
 θ = dfLabor_market_yearly['Tightness']
 ν = dfMatching_params['unemployment_elasticity']
-U = np.array(dfLabor_market_yearly['Unemployment']).reshape((O,1))
+U = 1000*np.array(dfLabor_market_yearly['Unemployment']).reshape((O,1))
+u = np.diag(dfLabor_market_yearly['u'])
 V = np.array(dfLabor_market_yearly['Vacancy']).reshape((O,1))
-L_mat = np.array(dfLUmerged.iloc[:, 7:]).reshape((O,J))
+L_mat = np.array(dfLUmerged.iloc[:, 10:]).reshape((O,J))
 L = np.sum(L_mat,1).reshape((O,1))
 
 tau = dfTau['Tau']
 curlyT = np.diag(tau)
 curlyQ = np.diag(-ν)
-curlyF =  np.eye(O) + curlyQ
+curlyF = np.eye(O) + curlyQ
+curlyF = u@curlyF
 theta = np.diag(V.flatten()/U.flatten())
-print(theta)
 
 phi = np.diag(dfMatching_params['matching_efficiency'])
 
@@ -69,17 +70,6 @@ dlog_lam = np.zeros((J,1))
 dlog_epsN = np.zeros_like(epsN)
 dlog_epsD = np.zeros_like(epsD)
 curlyE = multi_occupation_network.curlyEFunc(dlog_epsN,epsN)
-
-# Setting which sectors to shock, and getting the full name of the sector. 
-sec_to_shock = 'dur'
-shock_size = 0.01
-shock_ind = sectors[sectors=='dur'].index.values[0]
-# For reference, these are other sectors we can shock
-print(sectors)
-sec_dict = pd.read_excel("../data/raw/long_short_names_crosswalk.xlsx")
-sec_full = sec_dict['Industry'][sec_dict['short_names'] == sec_to_shock].iloc[0].title()
-print(f'the full name for {sec_to_shock} is {sec_full}')
-
 
 #### Picking Wage Assumption ####
 WageAssumption = ['Labor Market Frictions + Production Linkages','Production Linkages Only', 'Labor Market Frictions Only']
@@ -131,7 +121,7 @@ if do_unemployment:
 i = WageAssumption.index('Labor Market Frictions Only')
 epsK_no_network = epsK.copy()
 epsK_no_network[:,0] = np.sum(Omega,axis=1).reshape((J,1))+epsK_no_network[:,1]
-gamma = 0
+gamma = 0.7
 epsW_A, epsW_H, epsW_K = multi_occupation_network.WageElasticityFuncMP(gamma, np.eye(J), epsN, epsK_no_network, curlyF, curlyQ, curlyT, curlyL)
 dlog_wR = multi_occupation_network.WageFunc(dlog_A, dlog_H, dlog_K, epsW_A, epsW_H, epsW_K)
 dlog_theta = multi_occupation_network.ThetaFunc(dlog_A, dlog_H, dlog_K, dlog_wR, dlog_epsN, dlog_lam, np.eye(J), Omega, curlyF, curlyQ, curlyT, curlyE, curlyL, epsN, epsK_no_network)
@@ -149,8 +139,10 @@ if do_unemployment:
 
 #3
 i = WageAssumption.index('Labor Market Frictions + Production Linkages')
-gamma = 0
+gamma = 0.7
+print(epsW_A)
 epsW_A, epsW_H, epsW_K = multi_occupation_network.WageElasticityFuncMP(gamma, Psi, epsN, epsK, curlyF, curlyQ, curlyT, curlyL)
+print(epsW_A)
 dlog_wR = multi_occupation_network.WageFunc(dlog_A, dlog_H, dlog_K, epsW_A, epsW_H, epsW_K)
 dlog_theta = multi_occupation_network.ThetaFunc(dlog_A, dlog_H, dlog_K, dlog_wR, dlog_epsN, dlog_lam, Psi, Omega, curlyF, curlyQ, curlyT, curlyE, curlyL, epsN, epsK)
 occT_vec[:-1, i] = dlog_theta.flatten()
@@ -172,41 +164,48 @@ if do_unemployment:
 
 #### Creating Figures ####
 #fig1
+reorder = True
+fig_seq = False
+contains_agg = True
 sector_names = list(dfA['short_names']) + ['Agg Y']
 title = f'Response to 1% Technology Shock in {sec_full}'
 xlab = ''
 ylab = '$\ d\log y$ (pct.)'
-save_path = f'../output/figures/paper/sec4/{sec_to_shock}_AshockY.png'
+save_path = f'../output/figures/paper/sec4/{sec_to_shock}_AshockY'
 labels = WageAssumption
-bar_plot(100*sectorY_vec, sector_names, title, xlab, ylab, labels, save_path, colors=['tab:blue','tab:orange','tab:green'], rotation=30, fontsize=10, barWidth = 0.3, dpi=300)
+bar_plot(100*sectorY_vec, sector_names, title, xlab, ylab, labels, save_path, colors=['tab:blue','tab:orange','tab:green'], rotation=30, fontsize=10, barWidth = 0.3, dpi=300, reorder=reorder, gen_fig_sequence=fig_seq, contains_agg=contains_agg, order_ascending=False)
 
 if do_unemployment:
     #fig2
     occupation_names1 =  occupation_names + ['Agg $\\theta$']
     xlab = ''
     ylab = '$d \log \\theta$  (pct.)'
-    save_path = f'../output/figures/paper/sec4/{sec_to_shock}_AshockT.png'
+    save_path = f'../output/figures/paper/sec4/{sec_to_shock}_AshockT'
     labels = ['Labor Market Frictions + Production Linkages', 'Labor Market Frictions Only', 'Production Linkages Only']
-    bar_plot(100*occT_vec[:,[0,2,1]], occupation_names1, title, xlab, ylab, labels, save_path, colors=['tab:blue','tab:green','tab:orange'], rotation=30, fontsize=10, barWidth = 0.3, dpi=300)
+    bar_plot(100*occT_vec[:,[0, 2, 1]], occupation_names1, title, xlab, ylab, labels, save_path, colors=['tab:blue','tab:green','tab:orange'], rotation=30, fontsize=10, barWidth = 0.3, dpi=300, reorder=reorder, gen_fig_sequence=fig_seq, contains_agg=contains_agg, order_ascending=False)
+    i = WageAssumption.index('Labor Market Frictions Only')
+    print(pd.DataFrame({'name': occupation_names1, 'T':occT_vec[:, i]}))
+    i = WageAssumption.index('Labor Market Frictions + Production Linkages')
+    print(pd.DataFrame({'name': occupation_names1, 'T':occT_vec[:, i]}))
 
     # fig3
     occupation_names1 = occupation_names + ['Agg U']
     xlab = ''
     ylab = '$d \log U$  (pct.)'
-    save_path = f'../output/figures/paper/sec4/{sec_to_shock}_AshockU.png'
+    save_path = f'../output/figures/paper/sec4/{sec_to_shock}_AshockU'
     labels = ['Labor Market Frictions + Production Linkages', 'Labor Market Frictions Only', 'Production Linkages Only']
-    bar_plot(100*occU_vec[:,[0,2,1]], occupation_names1, title, xlab, ylab, labels, save_path, colors=['tab:blue','tab:green','tab:orange'], rotation=30, fontsize=10, barWidth = 0.3, dpi=300)
+    bar_plot(100*occU_vec[:,[0,2,1]], occupation_names1, title, xlab, ylab, labels, save_path, colors=['tab:blue','tab:green','tab:orange'], rotation=30, fontsize=10, barWidth = 0.3, dpi=300, reorder=reorder, gen_fig_sequence=fig_seq, contains_agg=contains_agg)
 
     # fig4
     occupation_names1 = occupation_names + ['Agg U']
     xlab = ''
     ylab = 'Pct. Point Change in Unemployment Rate'
-    save_path = f'../output/figures/paper/sec4/{sec_to_shock}_AshockUrate.png'
+    save_path = f'../output/figures/paper/sec4/{sec_to_shock}_AshockUrate'
     labels = ['Labor Market Frictions + Production Linkages', 'Labor Market Frictions Only', 'Production Linkages Only']
-    bar_plot(100*occUrate_vec[:,[0,2,1]], occupation_names1, title, xlab, ylab, labels, save_path, colors=['tab:blue','tab:green','tab:orange'], rotation=30, fontsize=10, barWidth = 0.3, dpi=300)
+    bar_plot(100*occUrate_vec[:,[0,2,1]], occupation_names1, title, xlab, ylab, labels, save_path, colors=['tab:blue','tab:green','tab:orange'], rotation=30, fontsize=10, barWidth = 0.3, dpi=300, reorder=reorder, gen_fig_sequence=fig_seq, contains_agg=contains_agg)
 
 ##################### 4.5 Figures ##############################
-WageAssumption = ['Rigid Real', '0.9MP', 'Rigid in Production Only', 'Rigid Nominal', 'MP']
+WageAssumption = ['Rigid Real', '0.7MP', '0.9MP', 'Rigid in Production Only', 'Rigid Nominal']
 sec_to_shock = 'dur'
 shock_size = 0.01
 shock_ind = sectors[sectors=='dur'].index.values[0]
@@ -247,6 +246,23 @@ i = WageAssumption.index('Rigid Nominal')
 num=0
 dlog_p = nominal_rigidity_network.PriceFunc(dlog_A=dlog_A, dlog_H=dlog_H, dlog_K=dlog_K, Psi=Psi, epsN=epsN, epsK=epsK, curlyQ=curlyQ, curlyT=curlyT, curlyF=curlyF, curlyL=curlyL, num=num)
 dlog_theta = nominal_rigidity_network.ThetaFunc(dlog_A, dlog_H, dlog_K, dlog_p, Psi, epsN, epsK, curlyL, curlyQ, curlyT, curlyF, num=num)
+occT_vec[:-1, i] = dlog_theta.flatten()
+dlog_y = multi_occupation_network.OutputFunc(dlog_A, dlog_H, dlog_K, dlog_theta, dlog_lam, Psi, Omega, curlyQ, curlyF, epsN, epsK, curlyT, curlyE)
+sectorY_vec[:-1, i] = dlog_y.flatten()
+sectorY_vec[-1, i] = multi_occupation_network.AggOutputFunc(dlog_y, dlog_lam, dlog_epsD, epsD)
+if do_unemployment:
+    dlog_U = multi_occupation_network.UnemploymentFunc(dlog_theta, dlog_H, curlyF, U, L)
+    occU_vec[:-1,i] = dlog_U.flatten()
+    occU_vec[-1, i] = multi_occupation_network.AggUnemploymentFunc(dlog_U, U)
+    occT_vec[-1, i] = multi_occupation_network.AggThetaFunc(dlog_theta, dlog_U, U, V)
+    occUrate_vec[:-1,i] = -(U.flatten()/(U.flatten()+L.flatten()) - (1+occU_vec[:-1,i].flatten()) * U.flatten()/(U.flatten()+L.flatten()))
+    occUrate_vec[-1,i] = -(U.sum()/(U.sum()+L.sum()) - (1+occU_vec[-1,i].flatten()) * U.sum()/(U.sum()+L.sum()))
+
+i = WageAssumption.index('0.7MP')
+gamma = 0.7
+epsW_A, epsW_H, epsW_K = multi_occupation_network.WageElasticityFuncMP(gamma, Psi, epsN, epsK, curlyF, curlyQ, curlyT, curlyL)
+dlog_wR = multi_occupation_network.WageFunc(dlog_A, dlog_H, dlog_K, epsW_A, epsW_H, epsW_K)
+dlog_theta = multi_occupation_network.ThetaFunc(dlog_A, dlog_H, dlog_K, dlog_wR, dlog_epsN, dlog_lam, Psi, Omega, curlyF, curlyQ, curlyT, curlyE, curlyL, epsN, epsK)
 occT_vec[:-1, i] = dlog_theta.flatten()
 dlog_y = multi_occupation_network.OutputFunc(dlog_A, dlog_H, dlog_K, dlog_theta, dlog_lam, Psi, Omega, curlyQ, curlyF, epsN, epsK, curlyT, curlyE)
 sectorY_vec[:-1, i] = dlog_y.flatten()
@@ -300,26 +316,6 @@ if do_unemployment:
     occUrate_vec[-1,i] = -(U.sum()/(U.sum()+L.sum()) - (1+occU_vec[-1,i].flatten()) * U.sum()/(U.sum()+L.sum()))
 
 
-i = WageAssumption.index('MP')
-gamma_A = 1
-gamma_H = 1
-gamma_K = 1
-epsW_A, epsW_H, epsW_K = multi_occupation_network.WageElasticityFunc(gamma_A, gamma_H, gamma_K, Psi, curlyL, epsN, epsK)
-dlog_wR = multi_occupation_network.WageFunc(dlog_A, dlog_H, dlog_K, epsW_A, epsW_H, epsW_K)
-dlog_theta = multi_occupation_network.ThetaFunc(dlog_A, dlog_H, dlog_K, dlog_wR, dlog_epsN, dlog_lam, Psi, Omega, curlyF, curlyQ, curlyT, curlyE, curlyL, epsN, epsK)
-occT_vec[:-1, i] = dlog_theta.flatten()
-dlog_y = multi_occupation_network.OutputFunc(dlog_A, dlog_H, dlog_K, dlog_theta, dlog_lam, Psi, Omega, curlyQ, curlyF, epsN, epsK, curlyT, curlyE)
-sectorY_vec[:-1, i] = dlog_y.flatten()
-sectorY_vec[-1, i] = multi_occupation_network.AggOutputFunc(dlog_y, dlog_lam, dlog_epsD, epsD)
-if do_unemployment:
-    dlog_U = multi_occupation_network.UnemploymentFunc(dlog_theta, dlog_H, curlyF, U, L)
-    occU_vec[:-1,i] = dlog_U.flatten()
-    occU_vec[-1, i] = multi_occupation_network.AggUnemploymentFunc(dlog_U, U)
-    occT_vec[-1, i] = multi_occupation_network.AggThetaFunc(dlog_theta, dlog_U, U, V)
-    occUrate_vec[:-1,i] = -(U.flatten()/(U.flatten()+L.flatten()) - (1+occU_vec[:-1,i].flatten()) * U.flatten()/(U.flatten()+L.flatten()))
-    occUrate_vec[-1,i] = -(U.sum()/(U.sum()+L.sum()) - (1+occU_vec[-1,i].flatten()) * U.sum()/(U.sum()+L.sum()))
-
-
 ### Figures ###
 #### Creating Figures ####
 #fig1
@@ -327,34 +323,34 @@ sector_names = list(dfA['short_names']) + ['Agg Y']
 title = f'Response to 1% Technology Shock in {sec_full}'
 xlab = ''
 ylab = '$\ d\log y$ (pct.)'
-save_path = f'../output/figures/paper/sec4robust/{sec_to_shock}_AshockY.png'
+save_path = f'../output/figures/paper/sec4robust/{sec_to_shock}_AshockY'
 labels = WageAssumption
-bar_plot(100*sectorY_vec, sector_names, title, xlab, ylab, labels, save_path, colors=['tab:blue','tab:orange','tab:green','tab:red','tab:purple'], rotation=30, fontsize=10, barWidth = 0.19, dpi=300)
+bar_plot(100*sectorY_vec, sector_names, title, xlab, ylab, labels, save_path, colors=['tab:blue','tab:orange','tab:green','tab:red','tab:purple'], rotation=30, fontsize=10, barWidth = 0.19, dpi=300, reorder=reorder, gen_fig_sequence=fig_seq, contains_agg=contains_agg, order_ascending=False)
 
 if do_unemployment:
 #fig2
     occupation_names1 =  occupation_names + ['Agg $\\theta$']
     xlab = ''
     ylab = '$d \log \\theta$  (pct.)'
-    save_path = f'../output/figures/paper/sec4robust/{sec_to_shock}_AshockT.png'
+    save_path = f'../output/figures/paper/sec4robust/{sec_to_shock}_AshockT'
     labels = WageAssumption
-    bar_plot(100*occT_vec, occupation_names1, title, xlab, ylab, labels, save_path, colors=['tab:blue','tab:orange','tab:green','tab:red','tab:purple'], rotation=30, fontsize=10, barWidth = 0.19, dpi=300)
+    bar_plot(100*occT_vec, occupation_names1, title, xlab, ylab, labels, save_path, colors=['tab:blue','tab:orange','tab:green','tab:red','tab:purple'], rotation=30, fontsize=10, barWidth = 0.19, dpi=300, reorder=reorder, gen_fig_sequence=fig_seq, contains_agg=contains_agg, order_ascending=False)
 
     # fig3
     occupation_names1 = occupation_names + ['Agg U']
     xlab = ''
     ylab = '$d \log U$  (pct.)'
-    save_path = f'../output/figures/paper/sec4robust/{sec_to_shock}_AshockU.png'
+    save_path = f'../output/figures/paper/sec4robust/{sec_to_shock}_AshockU'
     labels = WageAssumption
-    bar_plot(100*occU_vec, occupation_names1, title, xlab, ylab, labels, save_path, colors=['tab:blue','tab:orange','tab:green','tab:red','tab:purple'], rotation=30, fontsize=10, barWidth = 0.19, dpi=300)
+    bar_plot(100*occU_vec, occupation_names1, title, xlab, ylab, labels, save_path, colors=['tab:blue','tab:orange','tab:green','tab:red','tab:purple'], rotation=30, fontsize=10, barWidth = 0.19, dpi=300, reorder=reorder, gen_fig_sequence=fig_seq, contains_agg=contains_agg)
 
     # fig4
     occupation_names1 = occupation_names + ['Agg U']
     xlab = ''
     ylab = 'Pct. Point Change in Unemployment Rate'
-    save_path = f'../output/figures/paper/sec4robust/{sec_to_shock}_AshockUrate.png'
+    save_path = f'../output/figures/paper/sec4robust/{sec_to_shock}_AshockUrate'
     labels = WageAssumption
-    bar_plot(100*occUrate_vec, occupation_names1, title, xlab, ylab, labels, save_path, colors=['tab:blue','tab:orange','tab:green','tab:red','tab:purple'], rotation=30, fontsize=10, barWidth = 0.19, dpi=300)
+    bar_plot(100*occUrate_vec, occupation_names1, title, xlab, ylab, labels, save_path, colors=['tab:blue','tab:orange','tab:green','tab:red','tab:purple'], rotation=30, fontsize=10, barWidth = 0.19, dpi=300, reorder=reorder, gen_fig_sequence=fig_seq, contains_agg=contains_agg)
 
 
 #################### 5 Figures #################################
@@ -438,40 +434,40 @@ sector_names = list(dfA['short_names']) + ['Agg Y']
 title = f'Response to 1% Technology Shock in {sec_full}'
 xlab = ''
 ylab = '$\ d\log y$ (pct.)'
-save_path = f'../output/figures/paper/sec5/energy_servshockY.png'
+save_path = f'../output/figures/paper/sec5/energy_servshockY'
 labels = WageAssumption
-bar_plot(100*sectorY_vec, sector_names, title, xlab, ylab, labels, save_path, colors=['tab:blue','tab:orange'], rotation=30, fontsize=10, barWidth = 0.4, dpi=300)
+bar_plot(100*sectorY_vec, sector_names, title, xlab, ylab, labels, save_path, colors=['tab:blue','tab:orange'], rotation=30, fontsize=10, barWidth = 0.4, dpi=300, reorder=False, order_ascending=False)
 
 #fig2
 occupation_names1 =  occupation_names + ['Agg $\\theta$']
 xlab = ''
 ylab = '$d \log \\theta$  (pct.)'
-save_path = f'../output/figures/paper/sec5/energy_servshockT.png'
+save_path = f'../output/figures/paper/sec5/energy_servshockT'
 labels = ['Labor Market Frictions + Production Linkages', 'Production Linkages Only']
-bar_plot(100*occT_vec, occupation_names1, title, xlab, ylab, labels, save_path, colors=['tab:blue','tab:orange'], rotation=30, fontsize=10, barWidth = 0.4, dpi=300)
+bar_plot(100*occT_vec, occupation_names1, title, xlab, ylab, labels, save_path, colors=['tab:blue','tab:orange'], rotation=30, fontsize=10, barWidth = 0.4, dpi=300, reorder=False, order_ascending=False)
 
 # fig3
 occupation_names1 = occupation_names + ['Agg U']
 xlab = ''
 ylab = '$d \log U$  (pct.)'
-save_path = f'../output/figures/paper/sec5/energy_servshockU.png'
+save_path = f'../output/figures/paper/sec5/energy_servshockU'
 labels = ['Labor Market Frictions + Production Linkages', 'Production Linkages Only']
-bar_plot(100*occU_vec, occupation_names1, title, xlab, ylab, labels, save_path, colors=['tab:blue','tab:orange'], rotation=30, fontsize=10, barWidth = 0.4, dpi=300)
+bar_plot(100*occU_vec, occupation_names1, title, xlab, ylab, labels, save_path, colors=['tab:blue','tab:orange'], rotation=30, fontsize=10, barWidth = 0.4, dpi=300, reorder=False, order_ascending=False)
 
 # fig4
 occupation_names1 = occupation_names + ['Agg U']
 xlab = ''
 ylab = 'Pct. Point Change in Unemployment Rate'
-save_path = f'../output/figures/paper/sec5/energy_servshockUrate.png'
+save_path = f'../output/figures/paper/sec5/energy_servshockUrate'
 labels = ['Labor Market Frictions + Production Linkages', 'Production Linkages Only']
-bar_plot(100*occUrate_vec, occupation_names1, title, xlab, ylab, labels, save_path, colors=['tab:blue','tab:orange'], rotation=30, fontsize=10, barWidth = 0.4, dpi=300)
+bar_plot(100*occUrate_vec, occupation_names1, title, xlab, ylab, labels, save_path, colors=['tab:blue','tab:orange'], rotation=30, fontsize=10, barWidth = 0.4, dpi=300, reorder=False, order_ascending=False)
 
 # fig5
 xlab = ''
 ylab = '$d\log p$  (pct.)'
-save_path = f'../output/figures/paper/sec5/energy_servshockP.png'
+save_path = f'../output/figures/paper/sec5/energy_servshockP'
 labels = ['Labor Market Frictions + Production Linkages', 'Production Linkages Only']
-bar_plot(100*p_vec, sectors, title, xlab, ylab, labels, save_path, colors=['tab:blue','tab:orange'], rotation=30, fontsize=10, barWidth = 0.4, dpi=300)
+bar_plot(100*p_vec, sectors, title, xlab, ylab, labels, save_path, colors=['tab:blue','tab:orange'], rotation=30, fontsize=10, barWidth = 0.4, dpi=300,  contains_agg=False, reorder=False, order_ascending=False)
 
 
 print('done')
