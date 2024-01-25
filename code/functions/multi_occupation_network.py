@@ -253,7 +253,7 @@ def UnemploymentFunc(dlog_theta, dlog_H, curlyF, U, L):
 
 def AggUnemploymentFunc(dlog_U, U):
     U = np.diag(U.flatten())
-    dlog_Uagg = np.ones((1,U.shape[0])) @ (U / np.sum(U)) @ dlog_U 
+    dlog_Uagg = np.ones((1, U.shape[0])) @ (U / np.sum(U)) @ dlog_U 
     return dlog_Uagg
 
 def AggThetaFunc(dlog_theta, dlog_U, U, V):

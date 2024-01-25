@@ -45,7 +45,9 @@ epsN_norm = np.array(dfepsN)
 epsD = np.array(dfDemand['demand_elasticity']).reshape((J,1))
 epsK = np.matrix(shares[['Capital share', 'Energy share']])
 K = epsK.shape[1]
-dfLUmerged = dfLabor_market_yearly.merge(dfL, how='inner', left_on='variable',right_on='OCC_TITLE')
+dfLUmerged = dfLabor_market_yearly.merge(dfL, how='inner', 
+                                         left_on='variable',
+                                         right_on='OCC_TITLE')
 
 # if you want to turn off network linkages, uncomment these two lines of code.
 # Omega = np.zeros_like(Omega)
@@ -53,16 +55,17 @@ dfLUmerged = dfLabor_market_yearly.merge(dfL, how='inner', left_on='variable',ri
 θ = dfLabor_market_yearly['Tightness']
 ν = dfMatching_params['unemployment_elasticity']
 U = 1000*np.array(dfLabor_market_yearly['Unemployment']).reshape((O,1))
+u = np.diag(dfLabor_market_yearly['u'])
 V = np.array(dfLabor_market_yearly['Vacancy']).reshape((O,1))
-L_mat = np.array(dfLUmerged.iloc[:, 7:]).reshape((O,J))
-L = np.sum(L_mat,1).reshape((O,1))
+L_mat = np.array(dfLUmerged.iloc[:, 10:]).reshape((O,J))
+L = np.sum(L_mat, 1).reshape((O,1))
 
 tau = dfTau['Tau']
 curlyT = np.diag(tau)
 curlyQ = np.diag(-ν)
-curlyF =  np.eye(O) + curlyQ
+curlyF = np.eye(O) + curlyQ
+curlyF = u@curlyF
 theta = np.diag(V.flatten()/U.flatten())
-print(theta)
 
 phi = np.diag(dfMatching_params['matching_efficiency'])
 
@@ -77,7 +80,6 @@ sec_to_shock = 'dur'
 shock_size = 0.01
 shock_ind = sectors[sectors=='dur'].index.values[0]
 # For reference, these are other sectors we can shock
-print(sectors)
 sec_dict = pd.read_excel("data/raw/long_short_names_crosswalk.xlsx")
 sec_full = sec_dict['Industry'][sec_dict['short_names'] == sec_to_shock].iloc[0].title()
 print(f'the full name for {sec_to_shock} is {sec_full}')
@@ -187,6 +189,10 @@ fig_seq = True
 contains_agg = True
 #fig1
 sector_names = list(dfA['short_names']) + ['Agg Y']
+print(pd.DataFrame({'name': sector_names, 'y':sectorY_vec[:, i]}))
+i = WageAssumption.index('Production Linkages Only')
+print(pd.DataFrame({'name': sector_names, 'y':sectorY_vec[:, i]}))
+
 title = f'Response to 1% Technology Shock in {sec_full}'
 xlab = ''
 ylab = '$\ d\log y$ (pct.)'
@@ -203,6 +209,10 @@ if do_unemployment:
     save_path = f'output/figures/presentation/{sec_to_shock}_AshockT'
     labels = WageAssumption
     bar_plot(100*occT_vec, occupation_names1, title, xlab, ylab, labels, save_path=save_path, colors=['tab:blue','tab:orange','tab:green'], rotation=30, fontsize=10, barWidth = 0.3, dpi=300, reorder=reorder, gen_fig_sequence=fig_seq, order_ascending=False, contains_agg=contains_agg)
+    i = WageAssumption.index('Labor Market Frictions Only')
+    print(pd.DataFrame({'name': occupation_names1, 'Urate':occT_vec[:, i]}))
+    i = WageAssumption.index('Labor Market Frictions + Production Linkages')
+    print(pd.DataFrame({'name': occupation_names1, 'Urate':occT_vec[:, i]}))
 
     # fig3
     occupation_names1 = occupation_names + ['Agg U']
@@ -219,7 +229,10 @@ if do_unemployment:
     save_path = f'output/figures/presentation/{sec_to_shock}_AshockUrate'
     labels = WageAssumption
     bar_plot(100*occUrate_vec, occupation_names1, title, xlab, ylab, labels, save_path=save_path, colors=['tab:blue','tab:orange','tab:green'], rotation=30, fontsize=10, barWidth = 0.3, dpi=300, reorder=reorder, gen_fig_sequence=fig_seq, order_ascending=True, contains_agg=contains_agg)
-
+    i = WageAssumption.index('Labor Market Frictions Only')
+    print(pd.DataFrame({'name': occupation_names1, 'Urate':occUrate_vec[:, i]}))
+    i = WageAssumption.index('Labor Market Frictions + Production Linkages')
+    print(pd.DataFrame({'name': occupation_names1, 'Urate':occUrate_vec[:, i]}))
 
 ## Additional figures
 
