@@ -156,7 +156,7 @@ if do_unemployment:
 #3
 i = WageAssumption.index('Labor Market Frictions + Production Linkages')
 gamma = 0.7
-epsW_A, epsW_H, epsW_K = multi_occupation_network.WageElasticityFuncMP(gamma, np.eye(J), epsN, epsK_no_network, curlyF, curlyQ, curlyT, curlyL)
+epsW_A, epsW_H, epsW_K = multi_occupation_network.WageElasticityFuncMP(gamma, Psi, epsN, epsK, curlyF, curlyQ, curlyT, curlyL)
 #gamma_A = 0.7
 #gamma_H = 0
 #gamma_K = 0
