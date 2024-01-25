@@ -56,16 +56,28 @@ dfLUmerged = dfLabor_market_yearly.merge(dfL, how='inner',
 ν = dfMatching_params['unemployment_elasticity']
 U = 1000*np.array(dfLabor_market_yearly['Unemployment']).reshape((O,1))
 u = np.diag(dfLabor_market_yearly['u'])
+u = np.eye(N=u.shape[0], M=u.shape[1]) * 0.005
 V = np.array(dfLabor_market_yearly['Vacancy']).reshape((O,1))
 L_mat = np.array(dfLUmerged.iloc[:, 10:]).reshape((O,J))
 L = np.sum(L_mat, 1).reshape((O,1))
 
 tau = dfTau['Tau']
 curlyT = np.diag(tau)
+curlyT = np.eye(N=curlyT.shape[0], M=curlyT.shape[1]) * 0.12
+print(np.diag(u - ν@(u + curlyT)))
+
 curlyQ = np.diag(-ν)
 curlyF = np.eye(O) + curlyQ
 curlyF = u@curlyF
 theta = np.diag(V.flatten()/U.flatten())
+
+Xi = curlyL@Psi@epsN@(curlyF + curlyQ@curlyT)
+inv_mat = np.linalg.inv(curlyF - Xi)
+print(inv_mat)
+print(np.sum(inv_mat, axis=0))
+print(np.sum(inv_mat, axis=1))
+print(np.linalg.eig(inv_mat))
+print(np.diag(inv_mat))
 
 phi = np.diag(dfMatching_params['matching_efficiency'])
 
@@ -166,6 +178,7 @@ epsW_A, epsW_H, epsW_K = multi_occupation_network.WageElasticityFuncMP(gamma, Ps
 dlog_wR = multi_occupation_network.WageFunc(dlog_A, dlog_H, dlog_K, epsW_A, epsW_H, epsW_K)
 dlog_theta = multi_occupation_network.ThetaFunc(dlog_A, dlog_H, dlog_K, dlog_wR, dlog_epsN, dlog_lam, Psi, Omega, curlyF, curlyQ, curlyT, curlyE, curlyL, epsN, epsK)
 occT_vec[:-1, i] = dlog_theta.flatten()
+print(dlog_theta)
 dlog_y = multi_occupation_network.OutputFunc(dlog_A, dlog_H, dlog_K, dlog_theta, dlog_lam, Psi, Omega, curlyQ, curlyF, epsN, epsK, curlyT, curlyE)
 sectorY_vec[:-1, i] = dlog_y.flatten()
 sectorY_vec[-1, i] = multi_occupation_network.AggOutputFunc(dlog_y, dlog_lam, dlog_epsD, epsD)
@@ -192,7 +205,8 @@ sector_names = list(dfA['short_names']) + ['Agg Y']
 print(pd.DataFrame({'name': sector_names, 'y':sectorY_vec[:, i]}))
 i = WageAssumption.index('Production Linkages Only')
 print(pd.DataFrame({'name': sector_names, 'y':sectorY_vec[:, i]}))
-
+i = WageAssumption.index('Labor Market Frictions Only')
+print(pd.DataFrame({'name': sector_names, 'y':sectorY_vec[:, i]}))
 title = f'Response to 1% Technology Shock in {sec_full}'
 xlab = ''
 ylab = '$\ d\log y$ (pct.)'

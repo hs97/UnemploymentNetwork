@@ -140,9 +140,7 @@ if do_unemployment:
 #3
 i = WageAssumption.index('Labor Market Frictions + Production Linkages')
 gamma = 0.7
-print(epsW_A)
 epsW_A, epsW_H, epsW_K = multi_occupation_network.WageElasticityFuncMP(gamma, Psi, epsN, epsK, curlyF, curlyQ, curlyT, curlyL)
-print(epsW_A)
 dlog_wR = multi_occupation_network.WageFunc(dlog_A, dlog_H, dlog_K, epsW_A, epsW_H, epsW_K)
 dlog_theta = multi_occupation_network.ThetaFunc(dlog_A, dlog_H, dlog_K, dlog_wR, dlog_epsN, dlog_lam, Psi, Omega, curlyF, curlyQ, curlyT, curlyE, curlyL, epsN, epsK)
 occT_vec[:-1, i] = dlog_theta.flatten()
