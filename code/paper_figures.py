@@ -52,7 +52,8 @@ dfLUmerged = dfLabor_market_yearly.merge(dfL, how='inner', left_on='variable',ri
 ν = dfMatching_params['unemployment_elasticity']
 U = 1000*np.array(dfLabor_market_yearly['Unemployment']).reshape((O,1))
 u = np.diag(dfLabor_market_yearly['u'])
-V = np.array(dfLabor_market_yearly['Vacancy']).reshape((O,1))
+#V = np.array(dfLabor_market_yearly['Vacancy']).reshape((O,1))
+V = 1000*np.array(dfLabor_market_yearly['Vacancy']).reshape((O,1))
 L_mat = np.array(dfLUmerged.iloc[:, 10:]).reshape((O,J))
 L = np.sum(L_mat,1).reshape((O,1))
 
@@ -60,10 +61,11 @@ tau = dfTau['Tau']
 curlyT = np.diag(tau)
 curlyQ = np.diag(-ν)
 curlyF = np.eye(O) + curlyQ
-curlyF = u@curlyF
+curlyF = u @ curlyF
 theta = np.diag(V.flatten()/U.flatten())
 
-phi = np.diag(dfMatching_params['matching_efficiency'])
+#phi = np.diag(dfMatching_params['matching_efficiency'])
+phi = np.exp(np.log(1000*np.array(dfLabor_market_yearly['Hires'])) + np.diag(curlyQ) * np.log(U.flatten()) - (1+np.diag(curlyQ)) * np.log(V.flatten()))
 
 #Cobb-Douglas assumptions
 dlog_lam = np.zeros((J,1))
