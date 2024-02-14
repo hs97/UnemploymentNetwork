@@ -204,6 +204,7 @@ if do_unemployment:
     labels = ['Labor Market Frictions + Production Linkages', 'Labor Market Frictions Only', 'Production Linkages Only']
     bar_plot(100*occUrate_vec[:,[0,2,1]], occupation_names1, title, xlab, ylab, labels, save_path, colors=['tab:blue','tab:green','tab:orange'], rotation=30, fontsize=10, barWidth = 0.3, dpi=300, reorder=reorder, gen_fig_sequence=fig_seq, contains_agg=contains_agg)
 
+
 ##################### 4.5 Figures ##############################
 WageAssumption = ['Rigid Real', '0.7MP', '0.9MP', 'Rigid in Production Only', 'Rigid Nominal']
 sec_to_shock = 'dur'
